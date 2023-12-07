@@ -28,7 +28,9 @@ func main() {
 	shouldUpdate := flag.Bool("update", false, "Should update")
 	flag.Parse()
 	if *shouldUpdate {
-
+		updateVersion(version)
+		fmt.Printf("Updated")
+		return
 	}
 	isOutdated := checkVersion(version)
 	if isOutdated {
@@ -75,10 +77,20 @@ func updateVersion(version string) bool {
 		return false
 	}
 
+	fmt.Println(result[0].Assets[0].BrowserDownloadUrl)
+	if result[0].Assets[0].BrowserDownloadUrl == "" {
+		return false
+	}
+
 	currVer, _ := versions.NewVersion(version)
 	lastVer, _ := versions.NewVersion(result[0].TagName)
 	if currVer.GreaterThanOrEqual(lastVer) {
 		return false
+	}
+
+	err = os.Rename("dctl", "dctl_old")
+	if err != nil {
+		log.Fatalf("Failed to rename current binary")
 	}
 
 	out, err := os.Create("dctl")
@@ -90,6 +102,8 @@ func updateVersion(version string) bool {
 	if err != nil {
 		log.Fatalf("Failed to update version to %s from %s", result[0].TagName, result[0].Assets[0].BrowserDownloadUrl)
 	}
+	os.Chmod("dctl", 0700)
+	os.Remove("dctl_old")
 
 	return true
 }
