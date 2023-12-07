@@ -106,7 +106,7 @@ if [ "$1" == "db" ];
     fi
     if [ "$2" == "export" ];
         then
-        docker exec -it {{$projectName}}_{{.Commands.Db.Container}} su pg_dump -Fc -v -f full.dump -U $DB_USER $DB_NAME
+        docker exec -it {{$projectName}}_{{.Commands.Db.Container}} pg_dump -c -v -f ./dump.sql -U $DB_USER $DB_NAME
     fi
     if [ "$2" == "import" ];
         then
@@ -184,4 +184,9 @@ if [ "$1" == "build-docker" ];
             -t {{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
+    if [ "$2" == "" ];
+        then
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
+          ./dctl.sh build-docker {{$index}}{{end}}
+    fi
 fi

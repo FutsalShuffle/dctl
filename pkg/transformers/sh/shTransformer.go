@@ -2,14 +2,20 @@ package sh
 
 import (
 	"dctl/pkg/parsers/dctl"
+	"embed"
 	"log"
 	"os"
 	"text/template"
 )
 
+//go:embed dctl.sh
+//go:embed down.sh
+//go:embed up.sh
+var fs embed.FS
+
 func Transform(entity *dctl.DctlEntity) {
 	pwd, _ := os.Getwd()
-	b, err := os.ReadFile(pwd + "/pkg/transformers/sh/dctl.sh")
+	b, err := fs.ReadFile("dctl.sh")
 	if err != nil {
 		log.Println(err)
 	}
@@ -24,7 +30,7 @@ func Transform(entity *dctl.DctlEntity) {
 		log.Println("executing template:", err)
 	}
 
-	up, err := os.ReadFile(pwd + "/pkg/transformers/sh/up.sh")
+	up, err := fs.ReadFile("up.sh")
 	if err != nil {
 		log.Println(err)
 	}
@@ -33,7 +39,7 @@ func Transform(entity *dctl.DctlEntity) {
 	uf.Close()
 
 	os.Chmod(pwd+"/up.sh", 0700)
-	down, err := os.ReadFile(pwd + "/pkg/transformers/sh/down.sh")
+	down, err := os.ReadFile("down.sh")
 	if err != nil {
 		log.Println(err)
 	}

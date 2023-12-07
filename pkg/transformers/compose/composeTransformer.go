@@ -2,11 +2,16 @@ package compose
 
 import (
 	"dctl/pkg/parsers/dctl"
+	"embed"
 	"log"
 	"os"
 	"strings"
 	"text/template"
 )
+
+//go:embed template.yml
+//go:embed templateProd.yml
+var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
 	transformImageToDockerfile(entity)
@@ -15,7 +20,7 @@ func Transform(entity *dctl.DctlEntity) {
 		return
 	}
 	pwd, _ := os.Getwd()
-	b, err := os.ReadFile(pwd + "/pkg/transformers/compose/template.yml")
+	b, err := fs.ReadFile("template.yml")
 	if err != nil {
 		log.Println(err)
 	}
@@ -32,7 +37,7 @@ func Transform(entity *dctl.DctlEntity) {
 	pf, err := os.Create(pwd + "/docker-compose.yml")
 	err = t.Execute(pf, entity)
 
-	pt, err := os.ReadFile(pwd + "/pkg/transformers/compose/templateProd.yml")
+	pt, err := fs.ReadFile("templateProd.yml")
 	if err != nil {
 		log.Println(err)
 	}
