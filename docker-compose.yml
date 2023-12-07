@@ -88,7 +88,7 @@ services:
   redis:
     container_name: example_redis
     build:
-      context: ./../ 
+      context: . 
       dockerfile: ./containers/redis/Dockerfile
       
     ports:
@@ -98,7 +98,7 @@ services:
   smtp:
     container_name: example_smtp
     build:
-      context: ./../ 
+      context: . 
       dockerfile: ./containers/smtp/Dockerfile
       
     ports:

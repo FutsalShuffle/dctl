@@ -156,37 +156,70 @@ if [ "$1" == "rabbitmq" ];
 
 fi
 
-if [ "$1" == "build" ];
+if [ "$1" == "build-docker" ];
   then
     
     if [ "$2" == "nginx" ];
         then
-            docker build -t example/nginx:latest -f ./Dockerfile ./containers/nginx;
+            docker build ./containers/nginx \
+            --file ./containers/nginx/./Dockerfile \
+            --build-arg DOCUMENT_ROOT=$DOCUMENT_ROOT \
+            --build-arg GROUP_ID=$GROUP_ID \
+            --build-arg PROJECT_PREFIX=$PROJECT_PREFIX \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/nginx:latest;
     fi
     
     if [ "$2" == "php" ];
         then
-            docker build -t example/php:latest -f ./Dockerfile ./containers/php;
+            docker build ./containers/php \
+            --file ./containers/php/./Dockerfile \
+            --build-arg APP_ENV=$APP_ENV \
+            --build-arg GROUP_ID=${GROUP_ID} \
+            --build-arg USER_ID=${USER_ID} \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/php:latest;
     fi
     
     if [ "$2" == "postgres" ];
         then
-            docker build -t example/postgres:latest -f ./Dockerfile ./containers/postgres;
+            docker build ./containers/postgres \
+            --file ./containers/postgres/./Dockerfile \
+            --build-arg GROUP_ID=$GROUP_ID \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/postgres:latest;
     fi
     
     if [ "$2" == "redis" ];
         then
-            docker build -t example/redis:latest -f ./containers/redis/Dockerfile ./../;
+            docker build . \
+            --file ././containers/redis/Dockerfile \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/redis:latest;
     fi
     
     if [ "$2" == "smtp" ];
         then
-            docker build -t example/smtp:latest -f ./containers/smtp/Dockerfile ./../;
+            docker build . \
+            --file ././containers/smtp/Dockerfile \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/smtp:latest;
     fi
     
     if [ "$2" == "supervisor" ];
         then
-            docker build -t example/supervisor:latest -f ./WorkerDockerfile ./containers/php;
+            docker build ./containers/php \
+            --file ./containers/php/./WorkerDockerfile \
+            --build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t example/supervisor:latest;
     fi
     
 fi

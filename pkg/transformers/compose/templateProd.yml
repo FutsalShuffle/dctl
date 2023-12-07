@@ -4,7 +4,7 @@ version: '3.7'
 services:
 {{range $index, $container := .Containers}}  {{$index}}:
     container_name: {{$projectName}}_{{$index}}
-    image: {{$projectName}}/{{$index}}:latest
+    image: {{$projectName}}/{{$index}}:prod-latest
     {{ if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
     {{end}}
     {{- if $container.Ports}}ports:

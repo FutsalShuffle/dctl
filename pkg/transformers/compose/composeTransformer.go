@@ -9,6 +9,11 @@ import (
 )
 
 func Transform(entity *dctl.DctlEntity) {
+	transformImageToDockerfile(entity)
+
+	if !entity.Docker.Enabled {
+		return
+	}
 	pwd, _ := os.Getwd()
 	b, err := os.ReadFile(pwd + "/pkg/transformers/compose/template.yml")
 	if err != nil {
@@ -24,7 +29,6 @@ func Transform(entity *dctl.DctlEntity) {
 		log.Println("executing template:", err)
 	}
 
-	transformImageToDockerfile(entity)
 	pf, err := os.Create(pwd + "/docker-compose.yml")
 	err = t.Execute(pf, entity)
 
@@ -64,7 +68,7 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 		}
 
 		container.Build.Dockerfile = "./containers/" + index + "/Dockerfile"
-		container.Build.Context = "./../"
+		container.Build.Context = "."
 		container.Image = ""
 	}
 

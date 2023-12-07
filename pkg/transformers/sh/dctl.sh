@@ -171,12 +171,17 @@ if [ "$1" == "rabbitmq" ];
 
 fi
 
-if [ "$1" == "build" ];
+if [ "$1" == "build-docker" ];
   then
     {{range $index, $container := .Containers}}
     if [ "$2" == "{{$index}}" ];
         then
-            docker build -t {{$projectName}}/{{$index}}:latest -f {{$container.Build.Dockerfile}} {{$container.Build.Context}};
+            docker build {{$container.Build.Context}} \
+            --file {{$container.Build.Context}}/{{$container.Build.Dockerfile}} \
+            {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
+            {{end}}--build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t {{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
 fi
