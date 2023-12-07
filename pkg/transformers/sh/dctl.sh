@@ -103,7 +103,16 @@ if [ "$1" == "db" ];
     if [ "$2" == "" ];
         then
         docker exec -it {{$projectName}}_{{.Commands.Db.Container}} psql -U $DB_USER $DB_NAME;
-    fi{{end}}
+    fi
+    if [ "$2" == "export" ];
+        then
+        docker exec -it {{$projectName}}_{{.Commands.Db.Container}} su pg_dump -Fc -v -f full.dump -U $DB_USER $DB_NAME
+    fi
+    if [ "$2" == "import" ];
+        then
+        cat $1 | docker exec -i {{$projectName}}_{{.Commands.Db.Container}} psql -U $DB_USER $DB_NAME;
+    fi
+    {{end}}
 fi {{end}}
 
 if [ "$1" == "build" ];
