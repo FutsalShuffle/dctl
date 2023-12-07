@@ -1,5 +1,5 @@
 package dctl
 
 type EnabledOnlyEntity struct {
-	enabled bool
+	Enabled bool `yaml:"enabled"`
 }

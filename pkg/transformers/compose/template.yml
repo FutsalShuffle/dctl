@@ -1,0 +1,43 @@
+---
+version: '3.7'
+{{$projectName := .Name}}
+services:
+{{range $index, $container := .Containers}}  {{$index}}:
+    container_name: {{$projectName}}_{{$index}}
+    {{- if $container.Image}}
+    image: {{$container.Image}}
+    {{end}}
+    {{- if and $container.Build $container.Build.Dockerfile}}
+    build:
+      {{ if $container.Build.Context}}context: {{- $container.Build.Context}}
+      {{end}}
+      {{- if $container.Build.Dockerfile}}dockerfile: {{ $container.Build.Dockerfile}}
+      {{end}}
+      {{- if $container.Build.Args}}args:
+        {{ range $index, $arg := $container.Build.Args}}{{$index}}: {{$arg}}
+        {{ end}}
+       {{- end}}
+    {{end}}
+    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
+    {{end}}
+    {{- if $container.Ports}}ports:
+      {{ range $container.Ports}}- {{ . }}
+      {{ end}}
+    {{ end}}
+    {{- if $container.Volumes}}volumes:
+      {{range $container.Volumes}}- {{ . }} 
+      {{end}}
+    {{ end}}
+    {{- if $container.Links}}links:
+      {{range $container.Links}}- {{ . }} 
+      {{end}}
+    {{ end}}
+    {{- if $container.Restart}}restart: {{$container.Restart}}
+    {{end}}
+    {{- if $container.DependsOn}}depends_on: {{$container.DependsOn}}
+    {{end}}
+    {{- if $container.Build.Args}}environment:
+      {{range $index, $env := $container.Environment}}{{$index}}: {{$env}} 
+      {{end}}
+    {{- end}}
+{{end}}

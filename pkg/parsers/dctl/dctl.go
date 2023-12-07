@@ -3,11 +3,12 @@ package dctl
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 )
 
-func ParseDctl() {
+func ParseDctl() DctlEntity {
 	var entity DctlEntity
 	b, _ := os.ReadFile("example.yaml")
 	data := string(b)
@@ -18,6 +19,8 @@ func ParseDctl() {
 		log.Fatalf("error: %v", err)
 	}
 	fmt.Println(prettyPrint(entity))
+
+	return entity
 }
 
 func prettyPrint(i DctlEntity) string {

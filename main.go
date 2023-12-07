@@ -1,7 +1,11 @@
 package main
 
-import "dctl/pkg/parsers/dctl"
+import (
+	"dctl/pkg/parsers/dctl"
+	"dctl/pkg/transformers/compose"
+)
 
 func main() {
-	dctl.ParseDctl()
+	entity := dctl.ParseDctl()
+	compose.Transform(entity)
 }

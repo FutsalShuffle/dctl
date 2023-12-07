@@ -50,6 +50,7 @@ containers:
       - ./../:/var/www/html
     links:
       - php
+    command: ["test", "py"]
 
   nginx:
     ports:
@@ -71,8 +72,8 @@ containers:
       - php
     restart: unless-stopped
     environment:
-      - APP_ENV=${APP_ENV}
-      - PROJECT_PREFIX=${PROJECT_PREFIX}
+       APP_ENV: ${APP_ENV}
+       PROJECT_PREFIX: ${PROJECT_PREFIX}
 
   php:
     build:
