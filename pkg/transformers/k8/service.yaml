@@ -1,0 +1,19 @@
+{{$deploymentName := .Name -}}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{.Name}}
+  name: {{.Name}}
+spec:
+  ports:
+    {{ $index, $value := range .Ports }}
+    - name: {{getPortTwo $value}}
+      port: {{getPortOne $value}}
+      targetPort: {{getPortTwo $value}}
+    {{end}}
+
+  selector:
+    io.kompose.service: {{.Name}}
+status:
+  loadBalancer: {}

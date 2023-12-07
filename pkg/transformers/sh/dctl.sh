@@ -38,6 +38,8 @@ if [ $# -eq 0 ]
     echo "up silent - docker up daemon"
     echo "down - docker down"
     echo "run - run in main container from project root"
+    echo "build-docker - build containers with prod-latest tags"
+    echo "db - enter database container"
 fi
 
 function runInRabbitMq {

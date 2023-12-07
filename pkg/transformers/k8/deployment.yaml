@@ -1,0 +1,45 @@
+{{$deploymentName := .Name -}}
+{{$projectName := .ProjectName -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{.Name}}
+  name: {{.Name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: {{.Name}}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{.Name}}
+    spec:
+      containers:
+        {{- if .Environment }}
+        - env:
+            {{ range $name, $value := .Environment}}
+            - name: {{$name}}
+              value: {{$value}}{{end}}
+        {{end}}
+          image: {{$projectName}}/{{$deploymentName}}:prod-latest
+          name: {{$projectName}}-{{$deploymentName}}
+          {{- if .Ports }}
+          ports:
+            - containerPort: {{getInnerPort .Ports}}{{end}}
+          resources: {}
+          volumeMounts:
+          {{ range $index, $value := .Volumes}}
+            - mountPath: {{getMountPath $value}}
+              name: {{$deploymentName}}-claim{{$index}}{{end}}
+      restartPolicy: Always
+      volumes:
+        {{ range $index, $value := .Volumes }}
+        - name: {{$deploymentName}}-claim{{$index}}
+          persistentVolumeClaim:
+            claimName: {{$deploymentName}}-claim{{$index}}
+        {{end}}
+status: {}

@@ -39,7 +39,7 @@ func Transform(entity *dctl.DctlEntity) {
 	uf.Close()
 
 	os.Chmod(pwd+"/up.sh", 0700)
-	down, err := os.ReadFile("down.sh")
+	down, err := fs.ReadFile("down.sh")
 	if err != nil {
 		log.Println(err)
 	}

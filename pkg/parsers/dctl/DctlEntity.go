@@ -3,8 +3,8 @@ package dctl
 type DctlEntity struct {
 	Version    float32           `yaml:"version"`
 	Name       string            `yaml:"name"`
-	Docker     EnabledOnlyEntity `yaml:"docker"`
-	K8         EnabledOnlyEntity `yaml:"k8"`
+	Docker     EnabledOnlyEntity `yaml:"docker" default:"true"`
+	K8         EnabledOnlyEntity `yaml:"k8" default:"true"`
 	Containers map[string]*struct {
 		Image       string            `yaml:"image"`
 		Ports       []string          `yaml:"ports"`
@@ -28,11 +28,11 @@ type DctlEntity struct {
 	} `yaml:"deployments"`
 	Commands struct {
 		Db struct {
-			Vendor    string
-			Container string
+			Vendor    string `default:"mysql" yaml:"vendor"`
+			Container string `default:"mysql" yaml:"container"`
 		} `yaml:"db"`
 		Run struct {
-			Container string
+			Container string `default:"php" yaml:"container"`
 		} `yaml:"run"`
 	} `yaml:"commands"`
 }

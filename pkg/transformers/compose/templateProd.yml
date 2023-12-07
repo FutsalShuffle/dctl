@@ -25,7 +25,7 @@ services:
       {{range $container.DependsOn}}- {{.}}
       {{end}}
     {{end}}
-    {{- if $container.Build.Args}}environment:
+    {{- if $container.Environment}}environment:
       {{range $index, $env := $container.Environment}}{{$index}}: {{$env}} 
       {{end}}
     {{- end}}

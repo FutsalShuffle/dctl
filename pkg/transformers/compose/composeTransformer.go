@@ -42,17 +42,19 @@ func Transform(entity *dctl.DctlEntity) {
 		log.Println(err)
 	}
 	dataProd := string(pt)
+
 	tp := template.
 		Must(template.New("docker-compose.prod").
 			Funcs(template.FuncMap{"join": join}).
 			Parse(dataProd))
+
 	pfp, err := os.Create(pwd + "/docker-compose.prod.yml")
 	err = tp.Execute(pfp, entity)
 }
 
 func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 	for index, container := range entity.Containers {
-		if container.Image == "" {
+		if container.Image == "" || container.Build.Dockerfile != "" {
 			continue
 		}
 
