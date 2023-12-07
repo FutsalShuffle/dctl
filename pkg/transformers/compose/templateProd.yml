@@ -4,19 +4,8 @@ version: '3.7'
 services:
 {{range $index, $container := .Containers}}  {{$index}}:
     container_name: {{$projectName}}_{{$index}}
-    {{- if $container.Image}}
-    image: {{$container.Image}}
-    {{end}}
-    {{- if and $container.Build $container.Build.Dockerfile}}
-    build:
-      {{ if $container.Build.Context}}context: {{ $container.Build.Context}} {{end}}
-      {{ if $container.Build.Dockerfile}}dockerfile: {{ $container.Build.Dockerfile}}{{end}}
-      {{ if $container.Build.Args}}args:
-        {{ range $index, $arg := $container.Build.Args}}{{$index}}: {{$arg}}
-        {{ end}}
-      {{- end}}
-    {{end}}
-    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
+    image: {{$projectName}}/{{$index}}:latest
+    {{ if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
     {{end}}
     {{- if $container.Ports}}ports:
       {{ range $container.Ports}}- "{{ . }}"

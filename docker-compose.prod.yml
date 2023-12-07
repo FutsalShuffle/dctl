@@ -1,0 +1,91 @@
+---
+version: '3.7'
+
+services:
+  nginx:
+    container_name: example_nginx
+    image: example/nginx:latest
+    ports:
+      - "80:80"
+      
+    volumes:
+      - ./../:/var/www/html 
+      - ./logs/nginx:/var/log/nginx 
+      
+    links:
+      - php 
+      
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      
+    environment:
+      APP_ENV: ${APP_ENV} 
+      PROJECT_PREFIX: ${PROJECT_PREFIX} 
+      
+  php:
+    container_name: example_php
+    image: example/php:latest
+    volumes:
+      - ./../:/var/www/html 
+      - ./logs/php:/var/log/php 
+      - ./data/sessions:/var/www/sessions 
+      
+    links:
+      - postgres 
+      - redis 
+      
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV} 
+      DB_CONNECTION: pgsql 
+      DB_DATABASE: ${DB_DATABASE} 
+      DB_HOST: ${DB_HOST} 
+      DB_PASSWORD: ${DB_PASSWORD} 
+      DB_USERNAME: ${DB_USER} 
+      PROJECT_PREFIX: $PROJECT_PREFIX 
+      
+  postgres:
+    container_name: example_postgres
+    image: example/postgres:latest
+    ports:
+      - "5432:5432"
+      
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data 
+      - ./logs/postgres:/var/log/postgresql/ 
+      
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata 
+      PGTZ: Europe/Moscow 
+      POSTGRES_DB: ${DB_DATABASE} 
+      POSTGRES_PASSWORD: ${DB_PASSWORD} 
+      POSTGRES_USER: ${DB_USER} 
+      TZ: Europe/Moscow 
+      
+  redis:
+    container_name: example_redis
+    image: example/redis:latest
+    ports:
+      - "6382:6379"
+      
+    
+  smtp:
+    container_name: example_smtp
+    image: example/smtp:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+      
+    
+  supervisor:
+    container_name: example_supervisor
+    image: example/supervisor:latest
+    volumes:
+      - ./../:/var/www/html 
+      
+    links:
+      - php 
+      
+    

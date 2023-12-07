@@ -5,7 +5,7 @@ type DctlEntity struct {
 	Name       string            `yaml:"name"`
 	Docker     EnabledOnlyEntity `yaml:"docker"`
 	K8         EnabledOnlyEntity `yaml:"k8"`
-	Containers map[string]struct {
+	Containers map[string]*struct {
 		Image       string            `yaml:"image"`
 		Ports       []string          `yaml:"ports"`
 		Volumes     []string          `yaml:"volumes"`
@@ -26,5 +26,13 @@ type DctlEntity struct {
 			Paths []string `yaml:"paths"`
 		} `yaml:"ingress"`
 	} `yaml:"deployments"`
-	//Commands string `yaml:"commands"`
+	Commands struct {
+		Db struct {
+			Vendor    string
+			Container string
+		} `yaml:"db"`
+		Run struct {
+			Container string
+		} `yaml:"run"`
+	} `yaml:"commands"`
 }

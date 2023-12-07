@@ -50,7 +50,6 @@ containers:
       - ./../:/var/www/html
     links:
       - php
-    command: ["test", "py"]
 
   nginx:
     ports:
@@ -123,3 +122,8 @@ containers:
     restart: always
 
 commands:
+  db:
+    vendor: mysql
+    container: postgres
+  run:
+    container: php
