@@ -2,7 +2,6 @@ package dctl
 
 import (
 	"encoding/json"
-	"fmt"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -18,7 +17,6 @@ func ParseDctl() DctlEntity {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	fmt.Println(prettyPrint(entity))
 
 	return entity
 }
