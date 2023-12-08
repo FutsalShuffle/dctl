@@ -1,0 +1,107 @@
+version: 1
+name: laravel
+
+docker:
+  enabled: true
+
+k8:
+  enabled: false
+
+deployments:
+  php:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    ingress:
+      nginx:
+        paths:
+          - /
+
+  nginx:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+containers:
+  nginx:
+    ports:
+      - "80:80"
+    build:
+      context: ./containers/nginx
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
+        PROJECT_PREFIX: "$PROJECT_PREFIX"
+        DOCUMENT_ROOT: "$DOCUMENT_ROOT"
+    depends_on:
+      - postgres
+    volumes:
+      - ./../:/var/www/html
+      - ./logs/nginx:/var/log/nginx
+    links:
+      - php
+    restart: unless-stopped
+    environment:
+       APP_ENV: ${APP_ENV}
+       PROJECT_PREFIX: ${PROJECT_PREFIX}
+
+  php:
+    build:
+      context: ./containers/php
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: ${USER_ID}
+        GROUP_ID: ${GROUP_ID}
+        APP_ENV: "$APP_ENV"
+    volumes:
+      - ./../:/var/www/html
+      - ./data/sessions:/var/www/sessions
+    links:
+      - postgres
+      - redis
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV}
+      PROJECT_PREFIX: "$PROJECT_PREFIX"
+      DB_CONNECTION: "pgsql"
+      DB_HOST: ${DB_HOST}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+  postgres:
+    build:
+      context: ./containers/postgres
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
+    environment:
+      TZ: 'Europe/Moscow'
+      PGTZ: 'Europe/Moscow'
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./logs/postgres:/var/log/postgresql/
+    ports:
+      - "5432:5432"
+    restart: always
+
+commands:
+  db:
+    vendor: postgres
+    container: postgres
+  run:
+    container: php
