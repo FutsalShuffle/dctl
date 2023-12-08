@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-const Version = "v0.4"
+const Version = "v0.5"
 
 type ReleasesStruct struct {
 	TagName string `json:"tag_name"`
