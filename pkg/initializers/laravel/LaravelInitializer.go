@@ -22,6 +22,7 @@ func (Initializer) Init() {
 		"/containers/php/conf/www.conf",
 		"/containers/postgres/Dockerfile",
 		"/dctl.yaml",
+		"/.env.example",
 	}
 
 	currentVersion := version.Version
@@ -32,6 +33,11 @@ func (Initializer) Init() {
 	os.MkdirAll(pwd+"/containers/nginx/conf", os.ModePerm)
 	os.MkdirAll(pwd+"/containers/php/conf", os.ModePerm)
 	os.MkdirAll(pwd+"/containers/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/data/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/logs/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/logs/php", os.ModePerm)
 
 	for _, file := range files {
 		out, err := os.Create(pwd + file)

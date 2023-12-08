@@ -1,0 +1,101 @@
+version: 1
+name: laravel
+
+docker:
+  enabled: true
+
+k8:
+  enabled: false
+
+deployments:
+  php:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    ingress:
+      nginx:
+        paths:
+          - /
+
+  nginx:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+containers:
+  nginx:
+    ports:
+      - "${HTTP_PORT}:80"
+    build:
+      context: ./containers/nginx
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
+        PROJECT_PREFIX: "$PROJECT_PREFIX"
+    depends_on:
+      - mysql
+    volumes:
+      - ./../:/var/www/html
+      - ./logs/nginx:/var/log/nginx
+    links:
+      - php
+    restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV}
+      - PROJECT_PREFIX=${PROJECT_PREFIX}
+
+  php:
+    build:
+      context: ./containers/php
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
+    volumes:
+      - ./../:/var/www/html
+      - ./logs/php:/var/log/php
+      - ./data/sessions:/var/www/sessions
+    links:
+      - mysql
+      - mailtrap
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_HOST: ${MYSQL_HOST}
+      PROJECT_PREFIX: "$PROJECT_PREFIX"
+
+  mysql:
+    build:
+      context: ./containers/mysql
+      dockerfile: ./Dockerfile
+      args:
+        USER_ID: ${USER_ID}
+        GROUP_ID: ${GROUP_ID}
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ./logs/mysql:/var/log/mysql
+      - ./data/mysql:/var/lib/mysql
+    restart: unless-stopped
+
+commands:
+  db:
+    vendor: mysql
+    container: mysql
+  run:
+    container: php

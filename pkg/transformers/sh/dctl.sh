@@ -90,7 +90,7 @@ if [ "$1" == "db" ];
 
     if [ "$2" == "export" ];
         then
-        docker exec -it {{$projectName}}_{{.Commands.Db.Container}} su mysql -c "mysqldump -u $MYSQL_USER -p"$MYSQL_PASSWORD" $MYSQL_DATABASE"
+        docker exec -it {{$projectName}}_{{.Commands.Db.Container}} su mysql -c "export MYSQL_PWD='$MYSQL_PASSWORD'; mysqldump -u $MYSQL_USER -p"$MYSQL_PASSWORD" $MYSQL_DATABASE"
     fi
 
     if [ "$2" == "renew" ];
