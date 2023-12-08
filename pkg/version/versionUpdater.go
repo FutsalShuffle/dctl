@@ -62,11 +62,6 @@ func UpdateVersion() bool {
 		return false
 	}
 
-	fmt.Println(result[0].Assets[0].BrowserDownloadUrl)
-	if result[0].Assets[0].BrowserDownloadUrl == "" {
-		return false
-	}
-
 	currVer, _ := versions.NewVersion(Version)
 	lastVer, _ := versions.NewVersion(result[0].TagName)
 	if currVer.GreaterThanOrEqual(lastVer) {
@@ -84,6 +79,7 @@ func UpdateVersion() bool {
 	if urlDownload == "" {
 		log.Fatalf("Unable to find new build for your OS (%s %s).", runtime.GOARCH, runtime.GOOS)
 	}
+	fmt.Println(urlDownload)
 
 	resp, err := http.Get(urlDownload)
 	defer resp.Body.Close()
