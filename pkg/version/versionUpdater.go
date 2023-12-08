@@ -9,14 +9,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
-const Version = "v0.5"
+const Version = "v0.6"
 
 type ReleasesStruct struct {
 	TagName string `json:"tag_name"`
 	Assets  []struct {
 		BrowserDownloadUrl string `json:"browser_download_url"`
+		Name               string `json:"name"`
 	} `json:"assets"`
 }
 
@@ -70,6 +72,22 @@ func UpdateVersion() bool {
 	if currVer.GreaterThanOrEqual(lastVer) {
 		return false
 	}
+	buildName := "dctl_" + runtime.GOARCH + "_" + runtime.GOOS
+
+	urlDownload := ""
+	for _, asset := range result[0].Assets {
+		if asset.Name == buildName {
+			urlDownload = asset.BrowserDownloadUrl
+		}
+	}
+
+	if urlDownload == "" {
+		log.Fatalf("Unable to find new build for your OS (%s %s).", runtime.GOARCH, runtime.GOOS)
+	}
+
+	resp, err := http.Get(urlDownload)
+	defer resp.Body.Close()
+
 	err = os.Rename(exPath+"/dctl", exPath+"/dctl_old")
 	if err != nil {
 		log.Fatalf("Failed to rename current binary")
@@ -78,13 +96,12 @@ func UpdateVersion() bool {
 	out, err := os.Create(exPath + "/dctl")
 	defer out.Close()
 
-	resp, err := http.Get(result[0].Assets[0].BrowserDownloadUrl)
-	defer resp.Body.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		os.Rename(exPath+"/dctl_old", exPath+"/dctl")
-		log.Fatalf("Failed to update version to %s from %s error: %s", result[0].TagName, result[0].Assets[0].BrowserDownloadUrl, err)
+		log.Fatalf("Failed to update version to %s from %s error: %s", result[0].TagName, urlDownload, err)
 	}
+
 	os.Chmod(exPath+"/dctl", 0700)
 	os.Remove(exPath + "/dctl_old")
 
