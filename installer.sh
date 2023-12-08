@@ -6,7 +6,8 @@ case $(uname -m) in
     x86_64) architecture="amd64" ;;
     arm)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
 esac
-
+#"browser_download_url": "(.+)\/dctl_amd64_linux
+#https://api.github.com/repos/FutsalShuffle/dctl/releases/latest
 case $OSTYPE in
     linux*)     ostype="linux" ;;
     darwin*)    ostype="darwin" ;;
