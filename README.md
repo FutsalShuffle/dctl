@@ -1,5 +1,5 @@
 ## Установка
-```curl -s https://raw.githubusercontent.com/FutsalShuffle/dctl/v0.5/installer.sh | bash -s```
+```curl -s https://raw.githubusercontent.com/FutsalShuffle/dctl/master/installer.sh | bash -s```
 
 ### Команды
 1) dctl - запуск на текущем каталоге (обычно это в ./docker)
