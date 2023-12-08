@@ -59,14 +59,15 @@ func UpdateVersion() bool {
 	var result []ReleasesStruct
 	json.NewDecoder(req.Body).Decode(&result)
 	if len(result) == 0 {
-		return false
+		log.Fatalln("Couldn't find a new release. Try later.")
 	}
 
 	currVer, _ := versions.NewVersion(Version)
 	lastVer, _ := versions.NewVersion(result[0].TagName)
 	if currVer.GreaterThanOrEqual(lastVer) {
-		return false
+		log.Fatalln("You already have latest version.")
 	}
+
 	buildName := "dctl_" + runtime.GOARCH + "_" + runtime.GOOS
 
 	urlDownload := ""

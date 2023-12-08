@@ -5,7 +5,6 @@ import (
 	"dctl/pkg/initializers/laravel"
 	"dctl/pkg/initializers/symfony"
 	"log"
-	"os"
 )
 
 type ProjectInitializer interface {
@@ -25,5 +24,4 @@ func Initialize(projectType string) {
 	}
 
 	val.Init()
-	os.Exit(0)
 }

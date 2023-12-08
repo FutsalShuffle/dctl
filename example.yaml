@@ -1,12 +1,13 @@
 version: 1
-name: example
+name: example #Название проекта (префикс в контейнерах и не только)
 
 docker:
-  enabled: true
+  enabled: true #Генерировать ли docker-compose и Dockerfile
 
 k8:
-  enabled: true
+  enabled: true #Генерировать ли kubernetes конфиги
 
+#Пока не актуально
 deployments:
   php:
     resources:
@@ -30,6 +31,8 @@ deployments:
         cpu: 100m
         memory: 128Mi
 
+#Контейнеры docker-compose
+#Синтаксис как в docker-compose
 containers:
   smtp:
     image: mailhog/mailhog
@@ -121,9 +124,10 @@ containers:
       - "5432:5432"
     restart: always
 
+#Команды dctl
 commands:
   db:
-    vendor: mysql
-    container: postgres
+    vendor: mysql #или postgres
+    container: postgres #название контейнера
   run:
-    container: php
+    container: php #в каком контейнере исполняется dctl.sh run
