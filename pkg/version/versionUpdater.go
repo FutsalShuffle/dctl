@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-const version = "v0.2"
+const Version = "v0.3"
 
 type ReleasesStruct struct {
 	TagName string `json:"tag_name"`
@@ -32,7 +32,7 @@ func CheckVersion() bool {
 	if len(result) == 0 {
 		return false
 	}
-	currVer, _ := versions.NewVersion(version)
+	currVer, _ := versions.NewVersion(Version)
 	lastVer, _ := versions.NewVersion(result[0].TagName)
 	if currVer.LessThan(lastVer) {
 		return true
@@ -65,7 +65,7 @@ func UpdateVersion() bool {
 		return false
 	}
 
-	currVer, _ := versions.NewVersion(version)
+	currVer, _ := versions.NewVersion(Version)
 	lastVer, _ := versions.NewVersion(result[0].TagName)
 	if currVer.GreaterThanOrEqual(lastVer) {
 		return false

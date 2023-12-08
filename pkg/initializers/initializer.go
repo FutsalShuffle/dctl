@@ -1,12 +1,27 @@
-package main
+package initializers
+
+import (
+	"dctl/pkg/initializers/laravel"
+	"dctl/pkg/initializers/symfony"
+	"log"
+	"os"
+)
 
 type ProjectInitializer interface {
 	Init()
 }
 
-type ProjectInitialize struct {
-}
+func Initialize(projectType string) {
+	initializers := map[string]ProjectInitializer{
+		"laravel": laravel.Initializer{},
+		"symfony": symfony.Initializer{},
+	}
 
-func (*ProjectInitialize) Initialize(projectType string) {
+	val, exists := initializers[projectType]
+	if !exists {
+		log.Fatalln("Project type " + projectType + " does not exists")
+	}
 
+	val.Init()
+	os.Exit(0)
 }
