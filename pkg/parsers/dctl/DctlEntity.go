@@ -34,5 +34,9 @@ type DctlEntity struct {
 		Run struct {
 			Container string `default:"php" yaml:"container"`
 		} `yaml:"run"`
+		Extra []struct {
+			Name    string `yaml:"name"`
+			Command string `yaml:"command"`
+		} `yaml:"extra"`
 	} `yaml:"commands"`
 }

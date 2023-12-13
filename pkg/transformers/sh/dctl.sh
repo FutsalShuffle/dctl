@@ -192,3 +192,10 @@ if [ "$1" == "build-docker" ];
           ./dctl.sh build-docker {{$index}}{{end}}
     fi
 fi
+
+{{range $index, $command := .Commands.Extra}}
+if [ "$1" == "{{$command.Name}}" ];
+  then
+    {{$command.Command}}
+fi
+{{end}}
