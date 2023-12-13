@@ -30,7 +30,6 @@ COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/default.conf /etc/nginx/conf.d/default.conf
 RUN sed -i "s/#DOCUMENT_ROOT#/${DOCUMENT_ROOT}/g" /etc/nginx/conf.d/default.conf
 COPY conf/upstream.conf /etc/nginx/conf.d/upstream.conf
-COPY ./conf/htpasswd /etc/nginx/htpasswd
 
 EXPOSE 80
 

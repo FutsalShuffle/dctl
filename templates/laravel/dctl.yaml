@@ -62,6 +62,7 @@ containers:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
         APP_ENV: "$APP_ENV"
+        PROJECT_PREFIX: "$PROJECT_PREFIX"
     volumes:
       - ./../:/var/www/html
       - ./data/sessions:/var/www/sessions
@@ -72,11 +73,6 @@ containers:
     environment:
       APP_ENV: ${APP_ENV}
       PROJECT_PREFIX: "$PROJECT_PREFIX"
-      DB_CONNECTION: "pgsql"
-      DB_HOST: ${DB_HOST}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
 
   postgres:
     build:
@@ -105,3 +101,8 @@ commands:
     container: postgres
   run:
     container: php
+  extra:
+    - name: init-env
+      command: cp .env.example .env && ln -n .env ./../.env
+    - name: test
+      command: runInContainer "php artisan test"
