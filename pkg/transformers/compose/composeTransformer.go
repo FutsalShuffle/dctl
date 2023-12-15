@@ -3,6 +3,7 @@ package compose
 import (
 	"dctl/pkg/parsers/dctl"
 	"embed"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -50,6 +51,8 @@ func Transform(entity *dctl.DctlEntity) {
 
 	pfp, err := os.Create(pwd + "/docker-compose.prod.yml")
 	err = tp.Execute(pfp, entity)
+
+	fmt.Println("Generated docker-compose")
 }
 
 func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {

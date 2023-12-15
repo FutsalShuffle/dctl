@@ -3,6 +3,7 @@ package sh
 import (
 	"dctl/pkg/parsers/dctl"
 	"embed"
+	"fmt"
 	"log"
 	"os"
 	"text/template"
@@ -47,4 +48,6 @@ func Transform(entity *dctl.DctlEntity) {
 	df.WriteString(string(down))
 	df.Close()
 	os.Chmod(pwd+"/down.sh", 0700)
+
+	fmt.Println("Generated sh files")
 }

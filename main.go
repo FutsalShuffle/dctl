@@ -4,6 +4,7 @@ import (
 	"dctl/pkg/initializers"
 	"dctl/pkg/parsers/dctl"
 	"dctl/pkg/transformers/compose"
+	"dctl/pkg/transformers/gitlab"
 	"dctl/pkg/transformers/k8"
 	"dctl/pkg/transformers/sh"
 	"dctl/pkg/version"
@@ -39,6 +40,7 @@ func main() {
 
 	entity := dctl.ParseDctl()
 	compose.Transform(&entity)
+	gitlab.Transform(&entity)
 	sh.Transform(&entity)
 	k8.Transform(&entity)
 }

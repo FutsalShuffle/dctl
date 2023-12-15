@@ -39,4 +39,24 @@ type DctlEntity struct {
 			Command string `yaml:"command"`
 		} `yaml:"extra"`
 	} `yaml:"commands"`
+	Gitlab struct {
+		Registry string `yaml:"registry"`
+		Tests    []struct {
+			Name   string `yaml:"name"`
+			Docker struct {
+				Image string `yaml:"image"`
+				Build struct {
+					Context    string            `yaml:"context"`
+					Dockerfile string            `yaml:"dockerfile"`
+					Args       map[string]string `yaml:"args"`
+				}
+			}
+			Before       []string `yaml:"before"`
+			Scripts      []string `yaml:"scripts"`
+			After        []string `yaml:"after"`
+			AllowFailure bool     `yaml:"allow_failure" default:"false"`
+			Services     []string `yaml:"services"`
+			Require      string   `yaml:"require"`
+		} `yaml:"tests"`
+	} `yaml:"gitlab"`
 }

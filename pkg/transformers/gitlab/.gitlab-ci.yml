@@ -1,0 +1,32 @@
+cache:
+  paths:
+    - vendor/
+
+stages:
+  - build
+  - test
+
+variables:
+  GIT_STRATEGY: clone
+
+{{range $index, $container := .Containers}}
+build_{{$index}}:
+  stage: build
+  script:
+    - ./docker/dctl.sh build-docker {{$index}}
+    - ./docker/dctl.sh push-docker {{$index}}
+{{end}}
+{{range $index, $test := .Gitlab.Tests}}
+test_{{$test.Name}}:
+  stage: test
+  allow_failure: {{$test.AllowFailure}}
+  image: {{$test.Docker.Image}}
+  {{if $test.Scripts}}script:
+    {{range $indexS, $command := $test.Scripts}}- {{$command}}{{end}}{{end}}
+  {{if $test.Before}}before_script:
+    {{range $indexB, $command := $test.Before}}- {{$command}}{{end}}{{end}}
+  {{if $test.After}}after_script:
+    {{range $indexA, $command := $test.After}}- {{$command}}{{end}}{{end}}
+  {{if $test.Docker.Build.Args}}{{range $indexArg, $arg := $test.Docker.Build.Args}}variables:
+    {{$indexArg}}:{{$arg}}{{end}}{{end}}
+{{end}}

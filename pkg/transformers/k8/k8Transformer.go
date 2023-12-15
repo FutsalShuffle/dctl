@@ -3,6 +3,7 @@ package k8
 import (
 	"dctl/pkg/parsers/dctl"
 	"embed"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -105,6 +106,8 @@ func Transform(entity *dctl.DctlEntity) {
 			}
 		}
 	}
+
+	fmt.Println("Generated k8 files")
 }
 
 func splitString(sep string, stringv string) []string {

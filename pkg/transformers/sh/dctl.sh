@@ -25,6 +25,7 @@ test -e "./.env" || { cp .env.example .env; };
 export $(egrep -v '^#' .env | xargs)
 export PROJECT_PREFIX={{.Name}}
 {{$projectName := .Name}}
+{{$gitlab := .Gitlab}}
 
 if [ $# -eq 0 ]
   then
@@ -183,6 +184,7 @@ if [ "$1" == "build-docker" ];
             {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
+            $(if [ -n "${CI}" ]; then echo "--tag {{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
             -t {{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
@@ -192,7 +194,22 @@ if [ "$1" == "build-docker" ];
           ./dctl.sh build-docker {{$index}}{{end}}
     fi
 fi
-
+{{if $gitlab.Registry}}
+if [ "$1" == "push-docker" ];
+  then
+    {{range $index, $container := .Containers}}
+    if [ "$2" == "{{$index}}" ];
+        then
+            docker push {{$gitlab.Registry}}-{{$index}}:${CI_COMMIT_REF_NAME}
+    fi
+    {{end}}
+    if [ "$2" == "" ];
+        then
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
+          ./dctl.sh push-docker {{$index}}{{end}}
+    fi
+fi
+{{end}}
 {{range $index, $command := .Commands.Extra}}
 if [ "$1" == "{{$command.Name}}" ];
   then
