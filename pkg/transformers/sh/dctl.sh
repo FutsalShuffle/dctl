@@ -26,12 +26,11 @@ export $(egrep -v '^#' .env | xargs)
 export PROJECT_PREFIX={{.Name}}
 {{$projectName := .Name}}
 {{$gitlab := .Gitlab}}
-
 if [ $# -eq 0 ]
   then
     echo "HELP:"
     echo "make env - copy .env.example to .env"
-    echo "make db - load init bitrix database dump to mysql"
+    echo "make db - load init database dump to mysql"
     echo "db import FILE - load FILE to mysql"
     echo "db renew - load dump from repo, fresh db and apply"
     echo "build - make docker build"
@@ -39,7 +38,8 @@ if [ $# -eq 0 ]
     echo "up silent - docker up daemon"
     echo "down - docker down"
     echo "run - run in main container from project root"
-    echo "build-docker - build containers with prod-latest tags"
+    echo "build-docker - build containers with ci or prod-latest tags"
+    echo "push-docker - push containers with ci or prod-latest tags to registry"
     echo "db - enter database container"
 fi
 
@@ -66,14 +66,12 @@ if [ "$1" == "make" ];
            docker-compose -p {{$projectName}} run php npm i
     fi
 fi
-
 {{ if eq .Commands.Db.Vendor "mysql" }}
 function applyDump {
     cat $1 | docker exec -i {{$projectName}}_{{.Commands.Db.Container}} mysql -u $MYSQL_USER -p"$MYSQL_PASSWORD" $MYSQL_DATABASE;
     return $?
 }
 {{end}}
-
 {{ if .Commands.Db.Vendor }}
 if [ "$1" == "db" ];
   then
@@ -184,7 +182,7 @@ if [ "$1" == "build-docker" ];
             {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
-            $(if [ -n "${CI}" ]; then echo "--tag {{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
+            $(if [ -n "${CI}" ]; then echo "--tag {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
             -t {{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
@@ -194,13 +192,18 @@ if [ "$1" == "build-docker" ];
           ./dctl.sh build-docker {{$index}}{{end}}
     fi
 fi
-{{if $gitlab.Registry}}
+
 if [ "$1" == "push-docker" ];
   then
     {{range $index, $container := .Containers}}
     if [ "$2" == "{{$index}}" ];
         then
-            docker push {{$gitlab.Registry}}-{{$index}}:${CI_COMMIT_REF_NAME}
+          if [ -n "${CI}" ];
+          then
+            docker push {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}
+          else
+            docker push {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
+          fi
     fi
     {{end}}
     if [ "$2" == "" ];
@@ -209,7 +212,6 @@ if [ "$1" == "push-docker" ];
           ./dctl.sh push-docker {{$index}}{{end}}
     fi
 fi
-{{end}}
 {{range $index, $command := .Commands.Extra}}
 if [ "$1" == "{{$command.Name}}" ];
   then

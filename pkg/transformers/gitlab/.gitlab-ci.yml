@@ -8,25 +8,32 @@ stages:
 
 variables:
   GIT_STRATEGY: clone
-
-{{range $index, $container := .Containers}}
+{{$projectName := .Name}} {{$gitlab := .Gitlab}} {{$projectName := .Name}} {{$containers := .Containers}}
+{{range $index, $container := $containers}}
 build_{{$index}}:
   stage: build
   script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - chmod +x ./docker/dctl.sh
+    - cd docker
     - ./docker/dctl.sh build-docker {{$index}}
     - ./docker/dctl.sh push-docker {{$index}}
 {{end}}
-{{range $index, $test := .Gitlab.Tests}}
+{{range $index, $test := $gitlab.Tests}}
 test_{{$test.Name}}:
   stage: test
   allow_failure: {{$test.AllowFailure}}
-  image: {{$test.Docker.Image}}
+  image: {{$test.Docker.Image}}:${CI_COMMIT_REF_NAME}
   {{if $test.Scripts}}script:
-    {{range $indexS, $command := $test.Scripts}}- {{$command}}{{end}}{{end}}
-  {{if $test.Before}}before_script:
-    {{range $indexB, $command := $test.Before}}- {{$command}}{{end}}{{end}}
+  {{range $indexS, $command := $test.Scripts}}  - {{$command}}
+  {{end}}{{end}}
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  {{range $indexB, $command := $test.Before}}  - {{$command}}
+  {{end}}
   {{if $test.After}}after_script:
-    {{range $indexA, $command := $test.After}}- {{$command}}{{end}}{{end}}
-  {{if $test.Docker.Build.Args}}{{range $indexArg, $arg := $test.Docker.Build.Args}}variables:
-    {{$indexArg}}:{{$arg}}{{end}}{{end}}
+  {{range $indexA, $command := $test.After}}  - {{$command}}
+  {{end}}{{- end}}
+  {{if $test.Docker.Build.Args}}variables:{{range $indexArg, $arg := $test.Docker.Build.Args}}
+    {{$indexArg}}: {{$arg}}{{end}}{{end}}
 {{end}}
