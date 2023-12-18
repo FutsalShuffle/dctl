@@ -16,8 +16,8 @@ build_{{$index}}:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - chmod +x ./docker/dctl.sh
     - cd docker
-    - ./dctl.sh build-docker {{$index}}
-    - ./dctl.sh push-docker {{$index}}
+    - sh ./dctl.sh build-docker {{$index}}
+    - sh ./dctl.sh push-docker {{$index}}
 {{end}}
 {{range $index, $test := $gitlab.Tests}}
 test_{{$test.Name}}:
