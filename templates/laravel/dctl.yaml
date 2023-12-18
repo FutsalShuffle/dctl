@@ -1,34 +1,12 @@
 version: 1
-name: laravel
+name: projectName
 
 docker:
   enabled: true
+  registry: "" #Для CI/CD
 
 k8:
   enabled: false
-
-deployments:
-  php:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    ingress:
-      nginx:
-        paths:
-          - /
-
-  nginx:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
 
 containers:
   nginx:
@@ -56,8 +34,8 @@ containers:
 
   php:
     build:
-      context: ./containers/php
-      dockerfile: ./Dockerfile
+      context: ./../
+      dockerfile: ./docker/containers/php/Dockerfile
       args:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}

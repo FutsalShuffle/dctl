@@ -1,13 +1,16 @@
-cache:
+{{if .Gitlab.Cache.Paths}}cache:
   paths:
-    - vendor/
+{{range $indexP, $path := .Gitlab.Cache.Paths}}    - {{$path}}
+{{end}}{{end}}
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      when: always
+    - when: never
 
 stages:
   - build
   - test
-
-variables:
-  GIT_STRATEGY: clone
 {{$projectName := .Name}} {{$gitlab := .Gitlab}} {{$projectName := .Name}} {{$containers := .Containers}}
 {{range $index, $container := $containers}}
 build_{{$index}}:
@@ -27,10 +30,9 @@ test_{{$test.Name}}:
   {{if $test.Scripts}}script:
   {{range $indexS, $command := $test.Scripts}}  - {{$command}}
   {{end}}{{end}}
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  {{if $test.Before}}before_script:
   {{range $indexB, $command := $test.Before}}  - {{$command}}
-  {{end}}
+  {{end}}{{end}}
   {{if $test.After}}after_script:
   {{range $indexA, $command := $test.After}}  - {{$command}}
   {{end}}{{- end}}

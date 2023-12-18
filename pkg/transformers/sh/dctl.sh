@@ -24,8 +24,7 @@ test -e "./.env" || { cp .env.example .env; };
 #load .env
 export $(egrep -v '^#' .env | xargs)
 export PROJECT_PREFIX={{.Name}}
-{{$projectName := .Name}}
-{{$gitlab := .Gitlab}}
+{{$projectName := .Name}}{{$gitlab := .Gitlab}}{{$docker := .Docker}}
 if [ $# -eq 0 ]
   then
     echo "HELP:"
@@ -182,7 +181,7 @@ if [ "$1" == "build-docker" ];
             {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
-            $(if [ -n "${CI}" ]; then echo "--tag {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
+            $(if [ -n "${CI}" ]; then echo "--tag {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
             -t {{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
@@ -200,9 +199,9 @@ if [ "$1" == "push-docker" ];
         then
           if [ -n "${CI}" ];
           then
-            docker push {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}
+            docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}
           else
-            docker push {{if $gitlab.Registry}}{{$gitlab.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
+            docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
           fi
     fi
     {{end}}

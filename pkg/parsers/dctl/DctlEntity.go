@@ -1,9 +1,12 @@
 package dctl
 
 type DctlEntity struct {
-	Version    float32           `yaml:"version"`
-	Name       string            `yaml:"name"`
-	Docker     EnabledOnlyEntity `yaml:"docker" default:"true"`
+	Version float32 `yaml:"version"`
+	Name    string  `yaml:"name"`
+	Docker  struct {
+		Enabled  bool   `yaml:"enabled" default:"true"`
+		Registry string `yaml:"registry"`
+	} `yaml:"docker"`
 	K8         EnabledOnlyEntity `yaml:"k8" default:"true"`
 	Containers map[string]*struct {
 		Image       string            `yaml:"image"`
@@ -40,8 +43,10 @@ type DctlEntity struct {
 		} `yaml:"extra"`
 	} `yaml:"commands"`
 	Gitlab struct {
-		Registry string `yaml:"registry"`
-		Tests    []struct {
+		Cache struct {
+			Paths []string `yaml:"paths"`
+		} `yaml:"cache"`
+		Tests []struct {
 			Name   string `yaml:"name"`
 			Docker struct {
 				Image string `yaml:"image"`

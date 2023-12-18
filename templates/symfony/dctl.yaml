@@ -1,34 +1,12 @@
 version: 1
-name: laravel
+name: projectName
 
 docker:
   enabled: true
+  registry: "" #Для CI/CD
 
 k8:
   enabled: false
-
-deployments:
-  php:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    ingress:
-      nginx:
-        paths:
-          - /
-
-  nginx:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
 
 containers:
   nginx:
@@ -51,32 +29,27 @@ containers:
       - php
     restart: unless-stopped
     environment:
-       APP_ENV: ${APP_ENV}
-       PROJECT_PREFIX: ${PROJECT_PREFIX}
+      APP_ENV: ${APP_ENV}
+      PROJECT_PREFIX: ${PROJECT_PREFIX}
 
   php:
     build:
-      context: ./containers/php
-      dockerfile: ./Dockerfile
+      context: ./../
+      dockerfile: ./docker/containers/php/Dockerfile
       args:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
         APP_ENV: "$APP_ENV"
+        PROJECT_PREFIX: "$PROJECT_PREFIX"
     volumes:
       - ./../:/var/www/html
       - ./data/sessions:/var/www/sessions
     links:
       - postgres
-      - redis
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV}
       PROJECT_PREFIX: "$PROJECT_PREFIX"
-      DB_CONNECTION: "pgsql"
-      DB_HOST: ${DB_HOST}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
 
   postgres:
     build:
@@ -105,3 +78,6 @@ commands:
     container: postgres
   run:
     container: php
+  extra:
+    - name: init-env
+      command: cp .env.example .env && ln -n .env ./../.env

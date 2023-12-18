@@ -1,34 +1,12 @@
 version: 1
-name: laravel
+name: projectName
 
 docker:
   enabled: true
+  registry: "" #Для CI/CD
 
 k8:
   enabled: false
-
-deployments:
-  php:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    ingress:
-      nginx:
-        paths:
-          - /
-
-  nginx:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
 
 containers:
   nginx:
@@ -66,7 +44,6 @@ containers:
       - ./data/sessions:/var/www/sessions
     links:
       - mysql
-      - mailtrap
     restart: unless-stopped
     environment:
       APP_ENV: ${APP_ENV}
@@ -99,3 +76,6 @@ commands:
     container: mysql
   run:
     container: php
+  extra:
+    - name: init-env
+      command: cp .env.example .env && ln -n .env ./../.env
