@@ -1,13 +1,37 @@
 package dctl
 
+type GitlabStageStruct struct {
+	Name   string `yaml:"name"`
+	Docker struct {
+		Image string `yaml:"image"`
+		Build struct {
+			Args map[string]string `yaml:"args"`
+		}
+	}
+	Before       []string `yaml:"before"`
+	Scripts      []string `yaml:"scripts"`
+	After        []string `yaml:"after"`
+	AllowFailure bool     `yaml:"allow_failure" default:"false"`
+	Services     []string `yaml:"services"`
+	Require      string   `yaml:"require"`
+	Timeout      int      `yaml:"timeout"`
+	Tags         string   `yaml:"tags"`
+	Rules        []struct {
+		If   string
+		When string
+	}
+}
+
 type DctlEntity struct {
 	Version float32 `yaml:"version"`
 	Name    string  `yaml:"name"`
-	Docker  struct {
+	K8      struct {
+		Enabled bool `yaml:"enabled" default:"false"`
+	}
+	Docker struct {
 		Enabled  bool   `yaml:"enabled" default:"true"`
 		Registry string `yaml:"registry"`
 	} `yaml:"docker"`
-	K8         EnabledOnlyEntity `yaml:"k8" default:"true"`
 	Containers map[string]*struct {
 		Image       string            `yaml:"image"`
 		Ports       []string          `yaml:"ports"`
@@ -46,22 +70,7 @@ type DctlEntity struct {
 		Cache struct {
 			Paths []string `yaml:"paths"`
 		} `yaml:"cache"`
-		Tests []struct {
-			Name   string `yaml:"name"`
-			Docker struct {
-				Image string `yaml:"image"`
-				Build struct {
-					Context    string            `yaml:"context"`
-					Dockerfile string            `yaml:"dockerfile"`
-					Args       map[string]string `yaml:"args"`
-				}
-			}
-			Before       []string `yaml:"before"`
-			Scripts      []string `yaml:"scripts"`
-			After        []string `yaml:"after"`
-			AllowFailure bool     `yaml:"allow_failure" default:"false"`
-			Services     []string `yaml:"services"`
-			Require      string   `yaml:"require"`
-		} `yaml:"tests"`
+		Tests  []GitlabStageStruct `yaml:"tests"`
+		Deploy []GitlabStageStruct `yaml:"deploy"`
 	} `yaml:"gitlab"`
 }

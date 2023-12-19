@@ -13,7 +13,7 @@ import (
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
-	if len(entity.Gitlab.Tests) == 0 {
+	if len(entity.Gitlab.Tests) == 0 && len(entity.Gitlab.Deploy) == 0 {
 		return
 	}
 	pwd, _ := os.Getwd()

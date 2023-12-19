@@ -1,7 +1,7 @@
 {{if .Gitlab.Cache.Paths}}cache:
   paths:
 {{range $indexP, $path := .Gitlab.Cache.Paths}}    - {{$path}}
-{{end}}{{end}}
+{{end}}{{end -}}
 workflow:
   rules:
     - if: $CI_MERGE_REQUEST_ID
@@ -10,7 +10,8 @@ workflow:
 
 stages:
   - build
-  - test
+  {{if .Gitlab.Tests}}- test{{end}}
+  {{if .Gitlab.Deploy}}- deploy{{end}}
 {{$projectName := .Name}} {{$gitlab := .Gitlab}} {{$projectName := .Name}} {{$containers := .Containers}}
 {{range $index, $container := $containers}}
 build_{{$index}}:
@@ -21,21 +22,39 @@ build_{{$index}}:
     - cd docker
     - sh ./dctl.sh build-docker {{$index}}
     - sh ./dctl.sh push-docker {{$index}}
-{{end}}
+{{end -}}
 {{range $index, $test := $gitlab.Tests}}
-test_{{$test.Name}}:
+test:{{$test.Name}}:
   stage: test
   allow_failure: {{$test.AllowFailure}}
   image: {{$test.Docker.Image}}:${CI_COMMIT_REF_NAME}
   {{if $test.Scripts}}script:
   {{range $indexS, $command := $test.Scripts}}  - {{$command}}
-  {{end}}{{end}}
+  {{end}}{{end -}}
   {{if $test.Before}}before_script:
   {{range $indexB, $command := $test.Before}}  - {{$command}}
-  {{end}}{{end}}
+  {{end}}{{end -}}
   {{if $test.After}}after_script:
   {{range $indexA, $command := $test.After}}  - {{$command}}
-  {{end}}{{- end}}
+  {{end}}{{- end -}}
   {{if $test.Docker.Build.Args}}variables:{{range $indexArg, $arg := $test.Docker.Build.Args}}
-    {{$indexArg}}: {{$arg}}{{end}}{{end}}
-{{end}}
+    {{$indexArg}}: {{$arg}}{{end}}{{end -}}
+{{end -}}
+
+{{range $index, $deploy := $gitlab.Deploy}}
+deploy:{{$deploy.Name}}:
+  stage: deploy
+  when: manual
+  allow_failure: {{$deploy.AllowFailure}}
+  {{if $deploy.Scripts}}script:
+  {{range $indexS, $command := $deploy.Scripts}}  - {{$command}}
+  {{end}}{{end -}}
+  {{if $deploy.Before}}before_script:
+  {{range $indexB, $command := $deploy.Before}}  - {{$command}}
+  {{end}}{{end -}}
+  {{if $deploy.After}}after_script:
+  {{range $indexA, $command := $deploy.After}}  - {{$command}}
+  {{end}}{{- end -}}
+  {{if $deploy.Docker.Build.Args}}variables:{{range $indexArg, $arg := $deploy.Docker.Build.Args}}
+  {{$indexArg}}: {{$arg}}{{end}}{{end}}
+{{- end -}}
