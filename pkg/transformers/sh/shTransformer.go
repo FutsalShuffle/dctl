@@ -10,8 +10,6 @@ import (
 )
 
 //go:embed dctl.sh
-//go:embed down.sh
-//go:embed up.sh
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
@@ -30,24 +28,6 @@ func Transform(entity *dctl.DctlEntity) {
 	if err != nil {
 		log.Println("executing template:", err)
 	}
-
-	up, err := fs.ReadFile("up.sh")
-	if err != nil {
-		log.Println(err)
-	}
-	uf, _ := os.Create(pwd + "/up.sh")
-	uf.WriteString(string(up))
-	uf.Close()
-
-	os.Chmod(pwd+"/up.sh", 0700)
-	down, err := fs.ReadFile("down.sh")
-	if err != nil {
-		log.Println(err)
-	}
-	df, _ := os.Create(pwd + "/down.sh")
-	df.WriteString(string(down))
-	df.Close()
-	os.Chmod(pwd+"/down.sh", 0700)
 
 	fmt.Println("Generated sh files")
 }

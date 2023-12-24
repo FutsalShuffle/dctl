@@ -2,14 +2,13 @@ package dctl
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 )
 
 func ParseDctl() DctlEntity {
 	var entity DctlEntity
-	b, _ := os.ReadFile("dctl.yaml")
+	b, _ := os.ReadFile("./dctl.yaml")
 	data := string(b)
 
 	err := yaml.Unmarshal([]byte(data), &entity)

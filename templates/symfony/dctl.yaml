@@ -13,12 +13,11 @@ containers:
     ports:
       - "80:80"
     build:
-      context: ./containers/nginx
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./.dctl/containers/nginx/Dockerfile
       args:
         USER_ID: "$USER_ID"
         GROUP_ID: "$GROUP_ID"
-        PROJECT_PREFIX: "$PROJECT_PREFIX"
         DOCUMENT_ROOT: "$DOCUMENT_ROOT"
     depends_on:
       - postgres
@@ -28,33 +27,26 @@ containers:
     links:
       - php
     restart: unless-stopped
-    environment:
-      APP_ENV: ${APP_ENV}
-      PROJECT_PREFIX: ${PROJECT_PREFIX}
 
   php:
     build:
-      context: ./../
-      dockerfile: ./docker/containers/php/Dockerfile
+      context: .
+      dockerfile: ./.dctl/containers/php/Dockerfile
       args:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
-        APP_ENV: "$APP_ENV"
-        PROJECT_PREFIX: "$PROJECT_PREFIX"
     volumes:
       - ./../:/var/www/html
       - ./data/sessions:/var/www/sessions
     links:
       - postgres
+      - redis
     restart: unless-stopped
-    environment:
-      APP_ENV: ${APP_ENV}
-      PROJECT_PREFIX: "$PROJECT_PREFIX"
 
   postgres:
     build:
-      context: ./containers/postgres
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./.dctl/containers/postgres/Dockerfile
       args:
         USER_ID: "$USER_ID"
         GROUP_ID: "$GROUP_ID"
@@ -78,6 +70,3 @@ commands:
     container: postgres
   run:
     container: php
-  extra:
-    - name: init-env
-      command: cp .env.example .env && ln -n .env ./../.env

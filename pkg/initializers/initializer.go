@@ -2,6 +2,7 @@ package initializers
 
 import (
 	"dctl/pkg/initializers/bitrix"
+	"dctl/pkg/initializers/django"
 	"dctl/pkg/initializers/laravel"
 	"dctl/pkg/initializers/symfony"
 	"log"
@@ -16,6 +17,7 @@ func Initialize(projectType string) {
 		"laravel": laravel.Initializer{},
 		"symfony": symfony.Initializer{},
 		"bitrix":  bitrix.Initializer{},
+		"django":  django.Initializer{},
 	}
 
 	val, exists := initializers[projectType]

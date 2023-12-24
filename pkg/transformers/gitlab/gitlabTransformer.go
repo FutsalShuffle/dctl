@@ -29,7 +29,7 @@ func Transform(entity *dctl.DctlEntity) {
 		log.Println("executing template:", err)
 	}
 
-	pf, err := os.Create(pwd + "/../.gitlab-ci.yml")
+	pf, err := os.Create(pwd + "/.gitlab-ci.yml")
 	err = t.Execute(pf, entity)
 
 	fmt.Println("Generated gitlab-ci")

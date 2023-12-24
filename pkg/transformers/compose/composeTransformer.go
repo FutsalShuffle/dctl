@@ -66,8 +66,8 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 			""
 
 		pwd, _ := os.Getwd()
-		os.MkdirAll(pwd+"/containers/"+index, os.ModePerm)
-		f, err := os.Create(pwd + "/containers/" + index + "/Dockerfile")
+		os.MkdirAll(pwd+"/.dctl/containers/"+index, os.ModePerm)
+		f, err := os.Create(pwd + "/.dctl/containers/" + index + "/Dockerfile")
 		if err != nil {
 			log.Println(err)
 		}
@@ -77,7 +77,7 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 			log.Println(err)
 		}
 
-		container.Build.Dockerfile = "./containers/" + index + "/Dockerfile"
+		container.Build.Dockerfile = "./.dctl/containers/" + index + "/Dockerfile"
 		container.Build.Context = "."
 		container.Image = ""
 	}

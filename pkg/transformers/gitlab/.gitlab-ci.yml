@@ -18,8 +18,8 @@ build_{{$index}}:
   stage: build
   script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - chmod +x ./docker/dctl.sh
-    - cd docker
+    - chmod +x ./.dctl/dctl.sh
+    - cd ./.dctl
     - sh ./dctl.sh build-docker {{$index}}
     - sh ./dctl.sh push-docker {{$index}}
 {{end -}}

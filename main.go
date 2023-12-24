@@ -33,12 +33,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	isOutdated := version.CheckVersion()
-	if isOutdated {
-		fmt.Println("New version is out. Run dctl update to update your version.")
-	}
-
 	entity := dctl.ParseDctl()
+
 	compose.Transform(&entity)
 	gitlab.Transform(&entity)
 	sh.Transform(&entity)

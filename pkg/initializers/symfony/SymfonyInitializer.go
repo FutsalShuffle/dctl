@@ -23,10 +23,25 @@ func (Initializer) Init() {
 		"/dctl.yaml",
 	}
 
-	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/v0.3/templates/laravel"
+	currentVersion := version.Version
+	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/laravel"
+	pwd, _ := os.Getwd()
+
+	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/php", os.ModePerm)
 
 	for _, file := range files {
-		out, err := os.Create("./" + file)
+		path := pwd + "/.dctl" + file
+		if file == "/dctl.yaml" {
+			path = pwd + "/dctl.yaml"
+		}
+		out, err := os.Create(path)
 		if err != nil {
 			log.Println(err)
 		}

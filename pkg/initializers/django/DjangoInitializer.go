@@ -3,6 +3,6 @@ package django
 type Initializer struct {
 }
 
-func (*Initializer) Init() {
+func (Initializer) Init() {
 
 }

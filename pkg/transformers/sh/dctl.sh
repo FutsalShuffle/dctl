@@ -24,6 +24,7 @@ test -e "./.env" || { cp .env.example .env; };
 #load .env
 export $(egrep -v '^#' .env | xargs)
 export PROJECT_PREFIX={{.Name}}
+
 {{$projectName := .Name}}{{$gitlab := .Gitlab}}{{$docker := .Docker}}
 if [ $# -eq 0 ]
   then
@@ -122,7 +123,7 @@ fi
 
 if [ "$1" == "up" ];
   then
-    if [ "$2" == "silent" ];
+    if [ "$2" == "-d" ];
         then
             docker-compose -p {{$projectName}} up -d;
         else

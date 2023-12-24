@@ -33,17 +33,21 @@ func (Initializer) Init() {
 	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/bitrix"
 	pwd, _ := os.Getwd()
 
-	os.MkdirAll(pwd+"/containers/nginx/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/php/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/data/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/data/sessions", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/nginx", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/php", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/php", os.ModePerm)
 
 	for _, file := range files {
-		out, err := os.Create(pwd + file)
+		path := pwd + "/.dctl" + file
+		if file == "/dctl.yaml" {
+			path = pwd + "/dctl.yaml"
+		}
+		out, err := os.Create(path)
 		if err != nil {
 			log.Println(err)
 		}

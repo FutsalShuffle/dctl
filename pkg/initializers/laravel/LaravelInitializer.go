@@ -22,7 +22,6 @@ func (Initializer) Init() {
 		"/containers/php/conf/www.conf",
 		"/containers/postgres/Dockerfile",
 		"/dctl.yaml",
-		"/.env.example",
 	}
 
 	currentVersion := version.Version
@@ -30,17 +29,21 @@ func (Initializer) Init() {
 	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/laravel"
 	pwd, _ := os.Getwd()
 
-	os.MkdirAll(pwd+"/containers/nginx/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/php/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/postgres", os.ModePerm)
-	os.MkdirAll(pwd+"/data/postgres", os.ModePerm)
-	os.MkdirAll(pwd+"/data/sessions", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/postgres", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/nginx", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/php", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/php", os.ModePerm)
 
 	for _, file := range files {
-		out, err := os.Create(pwd + file)
+		path := pwd + "/.dctl" + file
+		if file == "/dctl.yaml" {
+			path = pwd + "/dctl.yaml"
+		}
+		out, err := os.Create(path)
 		if err != nil {
 			log.Println(err)
 		}
