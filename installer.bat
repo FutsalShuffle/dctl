@@ -1,4 +1,4 @@
-set DownloadUrl="https://github.com/FutsalShuffle/dctl/releases/download/v0.6/dctl_amd64_win"
+set DownloadUrl="https://github.com/FutsalShuffle/dctl/releases/download/v0.6/dctl_amd64_windows"
 set saveTo="%userprofile%\.dctl\dctl.exe"
 if not exist %userprofile%\.dctl mkdir %userprofile%\.dctl
 
