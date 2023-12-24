@@ -40,6 +40,7 @@ type DctlEntity struct {
 		DependsOn   []string          `yaml:"depends_on"`
 		Restart     string            `yaml:"restart"`
 		Environment map[string]string `yaml:"environment"`
+		Entrypoint  string            `yaml:"entrypoint"`
 		Command     []string          `yaml:"command"`
 		Build       struct {
 			Context    string            `yaml:"context"`

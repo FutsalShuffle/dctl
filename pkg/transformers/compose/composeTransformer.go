@@ -23,7 +23,7 @@ func Transform(entity *dctl.DctlEntity) {
 	pwd, _ := os.Getwd()
 	b, err := fs.ReadFile("template.yml")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	data := string(b)
 
@@ -32,7 +32,7 @@ func Transform(entity *dctl.DctlEntity) {
 			Funcs(template.FuncMap{"join": join}).
 			Parse(data))
 	if err != nil {
-		log.Println("executing template:", err)
+		log.Fatalln("executing template:", err)
 	}
 
 	pf, err := os.Create(pwd + "/docker-compose.yml")
@@ -40,7 +40,7 @@ func Transform(entity *dctl.DctlEntity) {
 
 	pt, err := fs.ReadFile("templateProd.yml")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	dataProd := string(pt)
 
@@ -69,12 +69,12 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 		os.MkdirAll(pwd+"/.dctl/containers/"+index, os.ModePerm)
 		f, err := os.Create(pwd + "/.dctl/containers/" + index + "/Dockerfile")
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		defer f.Close()
 		_, err = f.WriteString(dockerFile)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		container.Build.Dockerfile = "./.dctl/containers/" + index + "/Dockerfile"

@@ -16,7 +16,7 @@ func Transform(entity *dctl.DctlEntity) {
 	pwd, _ := os.Getwd()
 	b, err := fs.ReadFile("dctl.sh")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	data := string(b)
 
@@ -26,7 +26,7 @@ func Transform(entity *dctl.DctlEntity) {
 	os.Chmod(pwd+"/dctl.sh", 0700)
 
 	if err != nil {
-		log.Println("executing template:", err)
+		log.Fatalln("executing template:", err)
 	}
 
 	fmt.Println("Generated sh files")

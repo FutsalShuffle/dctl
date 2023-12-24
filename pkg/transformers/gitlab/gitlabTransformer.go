@@ -19,14 +19,14 @@ func Transform(entity *dctl.DctlEntity) {
 	pwd, _ := os.Getwd()
 	b, err := fs.ReadFile(".gitlab-ci.yml")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	data := string(b)
 
 	t := template.
 		Must(template.New("gitlab-ci").Parse(data))
 	if err != nil {
-		log.Println("executing template:", err)
+		log.Fatalln("executing template:", err)
 	}
 
 	pf, err := os.Create(pwd + "/.gitlab-ci.yml")

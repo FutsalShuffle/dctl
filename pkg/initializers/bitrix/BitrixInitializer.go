@@ -49,7 +49,7 @@ func (Initializer) Init() {
 		}
 		out, err := os.Create(path)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		defer out.Close()
@@ -59,7 +59,7 @@ func (Initializer) Init() {
 
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 	}
 
