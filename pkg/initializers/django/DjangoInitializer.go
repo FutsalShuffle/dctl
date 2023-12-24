@@ -1,6 +1,7 @@
 package django
 
 import (
+	"dctl/pkg/version"
 	"io"
 	"log"
 	"net/http"

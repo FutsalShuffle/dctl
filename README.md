@@ -1,9 +1,13 @@
 ## Установка
-```curl -s https://raw.githubusercontent.com/FutsalShuffle/dctl/master/installer.sh | bash -s```
+```curl -s https://raw.githubusercontent.com/FutsalShuffle/dctl/master/installer.sh | bash -s``` \
+Windows: \
+Загрузить ```https://raw.githubusercontent.com/FutsalShuffle/dctl/master/installer.bat``` и исполнить.
+
 Поддерживаемые системы:
 1) Linux amd64
 2) MacOS amd64
 3) MacOS arm64
+4) Windows amd64
 
 ### Изначальная структура проекта
 Проект может быть любой структуры. Dctl исполняется в корне проекта (не src/app). \

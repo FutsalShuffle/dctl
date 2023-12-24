@@ -1,6 +1,7 @@
 package next
 
 import (
+	"dctl/pkg/version"
 	"io"
 	"log"
 	"net/http"

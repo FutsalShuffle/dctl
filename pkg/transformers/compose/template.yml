@@ -30,7 +30,7 @@ services:
     {{- if $container.Links}}links:
       {{range $container.Links}}- {{ . }} 
       {{end}}
-    {{ end}}
+    {{end}}
     {{- if $container.Restart}}restart: {{$container.Restart}}
     {{end}}
     {{- if $container.DependsOn}}depends_on:

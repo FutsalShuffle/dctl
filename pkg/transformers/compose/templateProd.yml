@@ -15,12 +15,12 @@ services:
       {{range $container.Volumes}}- {{ . }} 
       {{end}}
     {{ end}}
-    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
-    {{ - if $container.Entrypoint }}entrypoint: {{$container.Entrypoint}}{{end}}
+    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]{{end}}
+    {{- if $container.Entrypoint }}entrypoint: {{$container.Entrypoint}}{{end}}
     {{- if $container.Links}}links:
       {{range $container.Links}}- {{ . }} 
       {{end}}
-    {{ end}}
+    {{end}}
     {{- if $container.Restart}}restart: {{$container.Restart}}
     {{end}}
     {{- if $container.DependsOn}}depends_on:

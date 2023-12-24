@@ -2,6 +2,7 @@ package dctl
 
 import (
 	"encoding/json"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 )

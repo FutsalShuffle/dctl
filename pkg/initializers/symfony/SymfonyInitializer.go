@@ -1,6 +1,7 @@
 package symfony
 
 import (
+	"dctl/pkg/version"
 	"io"
 	"log"
 	"net/http"
