@@ -2,11 +2,7 @@
   paths:
 {{range $indexP, $path := .Gitlab.Cache.Paths}}    - {{$path}}
 {{end}}{{end -}}
-workflow:
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
-      when: always
-    - when: never
+{{ getGitlabWorkflowString .Gitlab.OnlyWhen }}
 
 stages:
   - build

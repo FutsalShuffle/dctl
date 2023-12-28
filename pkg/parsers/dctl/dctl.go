@@ -1,7 +1,6 @@
 package dctl
 
 import (
-	"encoding/json"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -19,9 +18,4 @@ func ParseDctl() DctlEntity {
 	}
 
 	return entity
-}
-
-func prettyPrint(i DctlEntity) string {
-	s, _ := json.MarshalIndent(i, "", "\t")
-	return string(s)
 }

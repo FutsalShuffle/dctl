@@ -24,7 +24,10 @@ func Transform(entity *dctl.DctlEntity) {
 	data := string(b)
 
 	t := template.
-		Must(template.New("gitlab-ci").Parse(data))
+		Must(
+			template.New("gitlab-ci").
+				Funcs(template.FuncMap{"getGitlabWorkflowString": getGitlabWorkflowString}).
+				Parse(data))
 	if err != nil {
 		log.Fatalln("executing template:", err)
 	}
@@ -33,4 +36,21 @@ func Transform(entity *dctl.DctlEntity) {
 	err = t.Execute(pf, entity)
 
 	fmt.Println("Generated gitlab-ci")
+}
+
+func getGitlabWorkflowString(workflowType dctl.GitlabWorkflow) string {
+	if workflowType == dctl.MERGE_REQUEST {
+		return "workflow:\n  rules:\n    - if: $CI_MERGE_REQUEST_ID\n      when: always\n    - when: never"
+	}
+	if workflowType == dctl.ALWAYS {
+		return ""
+	}
+	if workflowType == dctl.NEVER {
+		return "workflow:\n  rules:\n    - when: never"
+	}
+	if workflowType == dctl.MERGE_REQUEST_MASTER {
+		return "workflow:\n  rules:\n    - if: $CI_COMMIT_BRANCH == 'master'\n      - if: $CI_COMMIT_BRANCH == 'main'"
+	}
+
+	return ""
 }

@@ -71,7 +71,17 @@ type DctlEntity struct {
 		Cache struct {
 			Paths []string `yaml:"paths"`
 		} `yaml:"cache"`
-		Tests  []GitlabStageStruct `yaml:"tests"`
-		Deploy []GitlabStageStruct `yaml:"deploy"`
+		OnlyWhen GitlabWorkflow      `yaml:"only_when" default:"merge_request"`
+		Tests    []GitlabStageStruct `yaml:"tests"`
+		Deploy   []GitlabStageStruct `yaml:"deploy"`
 	} `yaml:"gitlab"`
 }
+
+type GitlabWorkflow string
+
+const (
+	MERGE_REQUEST        GitlabWorkflow = "merge_request"
+	ALWAYS               GitlabWorkflow = "always"
+	MERGE_REQUEST_MASTER GitlabWorkflow = "merge_request_master"
+	NEVER                GitlabWorkflow = "never"
+)

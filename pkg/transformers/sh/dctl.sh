@@ -35,20 +35,15 @@ if [ $# -eq 0 ]
     echo "db renew - load dump from repo, fresh db and apply"
     echo "build - make docker build"
     echo "up - docker up in console"
-    echo "up silent - docker up daemon"
+    echo "up -d - docker up daemon"
     echo "down - docker down"
     echo "run - run in main container from project root"
-    echo "build-docker - build containers with ci or prod-latest tags"
-    echo "push-docker - push containers with ci or prod-latest tags to registry"
+    echo "build-docker - build containers with ci or latest tags"
+    echo "push-docker - push containers with ci or latest tags to registry"
+    echo "build-docker-prod - build containers with latest tag"
+    echo "push-docker-prod - push containers with with latest tag"
     echo "db - enter database container"
 fi
-
-function runInRabbitMq {
-    local command=$@
-    echo $command;
-    docker exec -i {{$projectName}}_rabbitmq bash -c "$command"
-    return $?
-}
 
 if [ "$1" == "make" ];
   then
@@ -158,20 +153,6 @@ if [ "$1" == "run" ];
     fi
 fi {{end}}
 
-if [ "$1" == "rabbitmq" ];
-  then
-
-    if [ "$2" == "up" ];
-        then
-            runInRabbitMq "rabbitmqctl delete_user guest"
-            runInRabbitMq "rabbitmqctl add_vhost /"
-            runInRabbitMq "rabbitmqctl add_user $RABBITMQ_LOGIN $RABBITMQ_PASSWORD"
-            runInRabbitMq "rabbitmqctl set_user_tags $RABBITMQ_LOGIN administrator"
-            runInRabbitMq "rabbitmqctl set_permissions -p / $RABBITMQ_LOGIN '.*' '.*' '.*'"
-    fi
-
-fi
-
 if [ "$1" == "build-docker" ];
   then
     {{range $index, $container := .Containers}}
@@ -183,7 +164,7 @@ if [ "$1" == "build-docker" ];
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
             $(if [ -n "${CI}" ]; then echo "--tag {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
-            -t {{$projectName}}/{{$index}}:prod-latest;
+            -t {{$projectName}}/{{$index}}:latest;
     fi
     {{end}}
     if [ "$2" == "" ];
@@ -202,7 +183,7 @@ if [ "$1" == "push-docker" ];
           then
             docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}
           else
-            docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
+            docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:latest
           fi
     fi
     {{end}}
@@ -212,6 +193,42 @@ if [ "$1" == "push-docker" ];
           ./dctl.sh push-docker {{$index}}{{end}}
     fi
 fi
+
+if [ "$1" == "push-docker-prod" ];
+  then
+    {{range $index, $container := .Containers}}
+    if [ "$2" == "{{$index}}" ];
+        then
+          docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
+    fi
+    {{end}}
+    if [ "$2" == "" ];
+        then
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
+          ./dctl.sh push-docker {{$index}}{{end}}
+    fi
+fi
+
+if [ "$1" == "build-docker-prod" ];
+  then
+    {{range $index, $container := .Containers}}
+    if [ "$2" == "{{$index}}" ];
+        then
+            docker build {{$container.Build.Context}} \
+            --file {{$container.Build.Context}}/{{$container.Build.Dockerfile}} \
+            {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
+            {{end}}--build-arg USER_ID=$USER_ID \
+            --build-arg GROUP_ID=$GROUP_ID \
+            -t {{$projectName}}/{{$index}}:prod-latest;
+    fi
+    {{end}}
+    if [ "$2" == "" ];
+        then
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
+          ./dctl.sh build-docker {{$index}}{{end}}
+    fi
+fi
+
 {{range $index, $command := .Commands.Extra}}
 if [ "$1" == "{{$command.Name}}" ];
   then

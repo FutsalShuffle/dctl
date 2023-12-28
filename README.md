@@ -56,6 +56,7 @@ commands:
     - name: composer-install #название команды
       command: ./dctl.sh run composer install #команда
 gitlab: #Настройки для gitlab ci/cd
+  only_when: merge_request #Доступные значения: merge_request, always, never, merge_request_master
   cache: 
     paths: #Кеширование путей (к примеру vendor, node_modules)
       - vendor/
