@@ -21,8 +21,8 @@ containers:
     depends_on:
       - postgres
     volumes:
-      - ./app/static:/app/app/static
-      - ./app/media:/app/app/media
+      - ./static:/app/static
+      - ./media:/app/media
       - ./.dctl/logs/nginx:/var/log/nginx
     links:
       - django
@@ -42,9 +42,9 @@ containers:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
     volumes:
-      - ./app/static:/app/static
-      - ./app/media:/app/media
-      - ./app:/app
+      - ./static:/app/static
+      - ./media:/app/media
+      - .:/app
     links:
       - postgres
     restart: unless-stopped

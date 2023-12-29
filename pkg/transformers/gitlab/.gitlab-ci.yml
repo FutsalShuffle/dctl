@@ -3,7 +3,7 @@
 {{range $indexP, $path := .Gitlab.Cache.Paths}}    - {{$path}}
 {{end}}{{end -}}
 {{ getGitlabWorkflowString .Gitlab.OnlyWhen }}
-
+{{ $entity := . }}
 stages:
   - build
   {{if .Gitlab.Tests}}- test{{end}}
@@ -14,8 +14,7 @@ build_{{$index}}:
   stage: build
   script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - chmod +x ./.dctl/dctl.sh
-    - cd ./.dctl
+    - chmod +x ./dctl.sh
     - sh ./dctl.sh build-docker {{$index}}
     - sh ./dctl.sh push-docker {{$index}}
 {{end -}}
@@ -23,7 +22,7 @@ build_{{$index}}:
 test:{{$test.Name}}:
   stage: test
   allow_failure: {{$test.AllowFailure}}
-  image: {{$test.Docker.Image}}:${CI_COMMIT_REF_NAME}
+  image: {{imageWithTag $entity $test.Docker.Image}}
   {{if $test.Scripts}}script:
   {{range $indexS, $command := $test.Scripts}}  - {{$command}}
   {{end}}{{end -}}
@@ -32,6 +31,9 @@ test:{{$test.Name}}:
   {{end}}{{end -}}
   {{if $test.After}}after_script:
   {{range $indexA, $command := $test.After}}  - {{$command}}
+  {{end}}{{- end -}}
+  {{if $test.Only}}only:
+  {{range $indexO, $only := $test.Only}}  - {{$only}}
   {{end}}{{- end -}}
   {{if $test.Docker.Build.Args}}variables:{{range $indexArg, $arg := $test.Docker.Build.Args}}
     {{$indexArg}}: {{$arg}}{{end}}{{end -}}
@@ -42,6 +44,7 @@ deploy:{{$deploy.Name}}:
   stage: deploy
   when: manual
   allow_failure: {{$deploy.AllowFailure}}
+  {{if $deploy.Image }}image: {{$deploy.Image}}{{end -}}
   {{if $deploy.Scripts}}script:
   {{range $indexS, $command := $deploy.Scripts}}  - {{$command}}
   {{end}}{{end -}}
@@ -50,6 +53,9 @@ deploy:{{$deploy.Name}}:
   {{end}}{{end -}}
   {{if $deploy.After}}after_script:
   {{range $indexA, $command := $deploy.After}}  - {{$command}}
+  {{end}}{{- end -}}
+  {{if $deploy.Only}}only:
+  {{range $indexO, $only := $deploy.Only}}  - {{$only}}
   {{end}}{{- end -}}
   {{if $deploy.Docker.Build.Args}}variables:{{range $indexArg, $arg := $deploy.Docker.Build.Args}}
   {{$indexArg}}: {{$arg}}{{end}}{{end}}

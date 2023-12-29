@@ -7,10 +7,10 @@ Windows: \
 1) Linux amd64
 2) MacOS amd64
 3) MacOS arm64
-4) Windows amd64
+4) Windows amd64 (? Возможно не работае self-update)
 
 ### Изначальная структура проекта
-Проект может быть любой структуры. Dctl исполняется в корне проекта (не src/app). \
+Сам проект может быть любой структуры. Но конфигурационные файлы должны быть в .dctl (докерфайлы, и прочее). Dctl исполняется в корне проекта (не src/app). \
 Итоговая структура получается: \
 - src/app
 - ...
@@ -19,7 +19,15 @@ Windows: \
 - docker-compose.yaml
 - docker-compose.prod.yaml
 - .env
-- dctl.yaml
+- dctl.yaml \
+
+В итоге docker-compose должен смотреть на ./.dctl/containers/... Если указан только image, то dctl автоматически сгенерирует Dockerfile в нужное место.
+### Перенос существующего проекта с docker-compose dctl сборкой на новый dctl
+В идеале - сделать ```dctl --init {тип}``` в корне проекта. \
+Далее нужно перенести Dockerfile, конфиги для них из ./docker в ./dctl/ (если они отличаются от стандартных, к примеру используются доп пакеты). **Обратите внимание** на context. В старых сборках он был указан обычно на ./containers/*/, теперь он на корень проекта. Соответственно ADD директивы и подобные должны быть в соответствии с этим контекстом. \
+После этого нужно настроить сам dctl.yaml файл. Прописать нехватающие контейнеры (можно скопировать из ./docker/docker-compose.yaml - но опять же обращайте внимание на build.context и путь до Dockerfile), комманды. \
+После настройки нужно прописать ```dctl``` в корне проекта и вы получите готовую сборку.
+
 
 ### Команды
 1) ```dctl``` - запуск на текущем каталоге (корень проекта)
@@ -34,7 +42,8 @@ Windows: \
 4) ```./dctl.sh down``` - остановить проект
 5) ```./dctl.sh make vendor``` - установить composer завимости
 6) ```./dctl.sh make env``` - скопировать .env.example в .env \
-   Это основные команды, за остальными в сам .dctl
+
+Это основные команды, за остальными в сам .dctl
 
 ### Конфигурация dctl.yaml
 ```yaml
@@ -63,7 +72,7 @@ gitlab: #Настройки для gitlab ci/cd
   tests: #Джобы на стадии tests
     - name: test
       docker:
-        image: image-php #Из какого образа запускать тесты, вместе с registry
+        image: project/image-php #Из какого образа запускать тесты, можно без registry урл, можно с тегом и без (без это ветка из ci/cd)
         build:
           args:
             USER_ID: "$USER_ID"
@@ -73,8 +82,12 @@ gitlab: #Настройки для gitlab ci/cd
         - cp -u .env.example .env && ln -nf .env ./../.env
         - php artisan test
       allow_failure: true
+      only:
+         - ...
   deploy: #Джобы для стадии deploy
     - name: dev
+      only:
+         - ...
       scripts: #Примерная команда для деплоя на dev через ssh (зайти, переключить ветку на текущий MR, сделать пулл и перезапустить приложение)
         - mkdir ~/.ssh
         - echo -n "$CI_GITLAB_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
@@ -88,4 +101,6 @@ gitlab: #Настройки для gitlab ci/cd
 ### CI/CD
 Сборкой образов в registry занимается сам dctl. Если указан registry и gitlab.tests или gitlab.deploy, то автоматически создастся .gitlab-ci.yaml с build стейджем и джобами на все контейнеры. \
 Сборка происходит в ```{registry}/{projectName}/{containerName}:$CI_COMMIT_REF_NAME```. \
+Запуская build-docker и push-docker в CI мы получим собранные и запушенные образы с тегом текущей ветки. Если же не из CI - latest. \
+build-docker-prod и push-docker-prod соберет и запушит контейнеры с тегом prod-latest. Их можно использовать для прода в docker-compose.prod.yaml, или же кубере (?) \
 Раннер должен быть настроен на схему docker in docker. (Дефолтный образ - docker:latest или конкретной версии).

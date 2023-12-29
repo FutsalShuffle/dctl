@@ -61,8 +61,8 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 			continue
 		}
 
-		dockerFile := "FROM " + container.Image + "" +
-			"" +
+		dockerFile := "FROM " + container.Image + "\n" +
+			"ARG USER_ID='1000'\nARG USER_ID=${USER_ID}\nENV USER_ID=${USER_ID}\n\nARG GROUP_ID='1000'\nARG GROUP_ID=${GROUP_ID}\nENV GROUP_ID=${GROUP_ID}\n" +
 			""
 
 		pwd, _ := os.Getwd()

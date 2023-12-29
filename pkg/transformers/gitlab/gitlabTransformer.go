@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -26,7 +27,9 @@ func Transform(entity *dctl.DctlEntity) {
 	t := template.
 		Must(
 			template.New("gitlab-ci").
-				Funcs(template.FuncMap{"getGitlabWorkflowString": getGitlabWorkflowString}).
+				Funcs(template.FuncMap{
+					"getGitlabWorkflowString": getGitlabWorkflowString,
+					"imageWithTag":            imageWithTag}).
 				Parse(data))
 	if err != nil {
 		log.Fatalln("executing template:", err)
@@ -53,4 +56,24 @@ func getGitlabWorkflowString(workflowType dctl.GitlabWorkflow) string {
 	}
 
 	return ""
+}
+
+func imageWithTag(entity dctl.DctlEntity, image string) string {
+	imageReturn := image
+
+	if imageReturn == "" {
+		return ""
+	}
+
+	if entity.Docker.Registry != "" { //Добавляем registry url если его нет в image
+		if !strings.Contains(imageReturn, entity.Docker.Registry) {
+			imageReturn = entity.Docker.Registry + "/" + imageReturn
+		}
+	}
+
+	if !strings.Contains(imageReturn, ":") { //Добавляем тег к образу, если его нет
+		imageReturn = imageReturn + ":${CI_COMMIT_REF_NAME}"
+	}
+
+	return imageReturn
 }

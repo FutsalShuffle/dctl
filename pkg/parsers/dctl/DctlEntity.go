@@ -16,10 +16,7 @@ type GitlabStageStruct struct {
 	Require      string   `yaml:"require"`
 	Timeout      int      `yaml:"timeout"`
 	Tags         string   `yaml:"tags"`
-	Rules        []struct {
-		If   string
-		When string
-	}
+	Only         []string `yaml:"only"`
 }
 
 type DctlEntity struct {

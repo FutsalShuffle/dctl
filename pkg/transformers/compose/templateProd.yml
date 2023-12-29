@@ -1,10 +1,10 @@
 ---
 version: '3'
-{{$projectName := .Name}}
+{{$projectName := .Name}} {{$docker := .Docker}}
 services:
 {{range $index, $container := .Containers}}  {{$index}}:
     container_name: {{$projectName}}_{{$index}}
-    image: {{$projectName}}/{{$index}}:prod-latest
+    image: {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
     {{ if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
     {{end}}
     {{- if $container.Ports}}ports:

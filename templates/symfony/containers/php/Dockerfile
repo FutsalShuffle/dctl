@@ -20,7 +20,7 @@ RUN apk add ssmtp bash git
 RUN wget -O /usr/local/bin/install-php-extensions https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions
 RUN chmod +x /usr/local/bin/install-php-extensions
 
-RUN  install-php-extensions pdo_pgsql intl gd zip mcrypt imagick memcached memcache opcache
+RUN install-php-extensions pdo_pgsql intl gd zip mcrypt imagick memcached memcache opcache
 
 ADD .dctl/containers/php/conf/php.ini /usr/local/etc/php/php.ini
 ADD .dctl/containers/php/conf/php.ini /usr/local/etc/php/php.ini

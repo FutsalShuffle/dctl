@@ -1,6 +1,7 @@
 package laravel
 
 import (
+	"dctl/pkg/initializers/common"
 	"dctl/pkg/version"
 	"io"
 	"log"
@@ -28,6 +29,14 @@ func (Initializer) Init() {
 
 	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/laravel"
 	pwd, _ := os.Getwd()
+
+	gitIgnoreLocations := []string{
+		pwd + "/.dctl/data/postgres",
+		pwd + "/.dctl/data/sessions",
+		pwd + "/.dctl/logs/postgres",
+		pwd + "/.dctl/logs/nginx",
+		pwd + "/.dctl/logs/php",
+	}
 
 	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
 	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
@@ -57,6 +66,12 @@ func (Initializer) Init() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+	}
+
+	for _, ignoreLoc := range gitIgnoreLocations {
+		loc, _ := os.Create(ignoreLoc)
+		_, _ = loc.WriteString(common.GetGitIgnoreContent())
+		_ = loc.Close()
 	}
 
 	log.Println("Initialized Laravel project!")

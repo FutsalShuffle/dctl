@@ -164,7 +164,7 @@ if [ "$1" == "build-docker" ];
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
             $(if [ -n "${CI}" ]; then echo "--tag {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:${CI_COMMIT_REF_NAME}" ; fi) \
-            -t {{$projectName}}/{{$index}}:latest;
+            -t {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:latest;
     fi
     {{end}}
     if [ "$2" == "" ];
@@ -219,13 +219,13 @@ if [ "$1" == "build-docker-prod" ];
             {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
-            -t {{$projectName}}/{{$index}}:prod-latest;
+            -t {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest;
     fi
     {{end}}
     if [ "$2" == "" ];
         then
           cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
-          ./dctl.sh build-docker {{$index}}{{end}}
+          ./dctl.sh build-docker-prod {{$index}}{{end}}
     fi
 fi
 

@@ -19,9 +19,9 @@ WORKDIR /app
 
 RUN pip install --upgrade pip
 RUN pip install gunicorn
-ADD ./app .
+ADD . ./
 RUN ls -la
-ADD ./requirements.txt /app/
+ADD ./requirements.txt ./
 RUN pip install -r requirements.txt
 CMD ["gunicorn", "main.wsgi:application", "--bind", "0.0.0.0:8000"]
 #CMD ["python", "manage.py", "runserver" ,"0.0.0.0:8000"]

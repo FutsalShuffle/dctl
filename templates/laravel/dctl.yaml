@@ -22,7 +22,7 @@ containers:
     depends_on:
       - postgres
     volumes:
-      - ./:/var/www/html
+      - .:/var/www/html
       - ./.dctl/logs/nginx:/var/log/nginx
     links:
       - php
@@ -36,7 +36,7 @@ containers:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
     volumes:
-      - ./:/var/www/html
+      - .:/var/www/html
       - ./.dctl/data/sessions:/var/www/sessions
     links:
       - postgres
