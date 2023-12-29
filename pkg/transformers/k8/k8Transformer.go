@@ -50,7 +50,7 @@ func Transform(entity *dctl.DctlEntity) {
 		if err != nil {
 			log.Fatalln("executing template:", err)
 		}
-		pf, err := os.Create(pwd + "/.dctl/k8/" + index + "-deployment" + ".yml")
+		pf, err := os.Create(pwd + "/.dctl/helm/" + index + "-deployment" + ".yml")
 		err = t.Execute(pf, deploymentEntity)
 
 		st, err := fs.ReadFile("deployment.yaml")
@@ -72,7 +72,7 @@ func Transform(entity *dctl.DctlEntity) {
 			log.Fatalln("executing template:", err)
 		}
 
-		pfs, err := os.Create(pwd + "/.dctl/k8/" + index + "-service" + ".yml")
+		pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-service" + ".yml")
 		err = ts.Execute(pfs, deploymentEntity)
 
 		if len(deploymentEntity.Volumes) > 0 {
@@ -101,13 +101,13 @@ func Transform(entity *dctl.DctlEntity) {
 					log.Fatalln("executing template:", err)
 				}
 
-				pfs, err := os.Create(pwd + "/.dctl/k8/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-claim" + ".yml")
+				pfs, err := os.Create(pwd + "/.dctl/helm/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-claim" + ".yml")
 				err = tsc.Execute(pfs, claimEntity)
 			}
 		}
 	}
 
-	fmt.Println("Generated k8 files")
+	fmt.Println("Generated helm files")
 }
 
 func splitString(sep string, stringv string) []string {

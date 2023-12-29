@@ -40,8 +40,8 @@ if [ $# -eq 0 ]
     echo "run - run in main container from project root"
     echo "build-docker - build containers with ci or latest tags"
     echo "push-docker - push containers with ci or latest tags to registry"
-    echo "build-docker-prod - build containers with latest tag"
-    echo "push-docker-prod - push containers with with latest tag"
+    echo "build-docker-prod - build containers with prod-latest tag"
+    echo "push-docker-prod - push containers with with prod-latest tag"
     echo "db - enter database container"
 fi
 
