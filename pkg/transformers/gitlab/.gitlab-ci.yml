@@ -44,7 +44,7 @@ deploy:{{$deploy.Name}}:
   stage: deploy
   when: manual
   allow_failure: {{$deploy.AllowFailure}}
-  {{if $deploy.Image }}image: {{$deploy.Image}}{{end -}}
+  {{if $deploy.Docker.Image}}image: {{$deploy.Docker.Image}}{{end -}}
   {{if $deploy.Scripts}}script:
   {{range $indexS, $command := $deploy.Scripts}}  - {{$command}}
   {{end}}{{end -}}
