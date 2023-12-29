@@ -1,0 +1,30 @@
+version: 1
+name: projectName
+
+docker:
+  enabled: true
+  registry: "" #Для CI/CD
+
+k8:
+  enabled: false
+
+containers:
+  node:
+    ports:
+      - "3000:3000"
+    build:
+      context: .
+      dockerfile: ./.dctl/containers/node/Dockerfile
+      args:
+        USER_ID: "$USER_ID"
+        GROUP_ID: "$GROUP_ID"
+    container_name: ${PROJECT_PREFIX}_node
+    entrypoint: /bin/sh
+    command: -c "npm i && npm run build && npm run dev"
+    volumes:
+      - .:/var/www/html
+    restart: unless-stopped
+
+commands:
+  run:
+    container: node

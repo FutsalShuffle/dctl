@@ -21,7 +21,6 @@ RUN usermod -u $USER_ID nginx
 COPY .dctl/containers/nginx/conf/nginx.conf /etc/nginx/nginx.conf
 COPY .dctl/containers/nginx/conf/default.conf /etc/nginx/conf.d/default.conf
 RUN sed -i "s/#DOCUMENT_ROOT#/${DOCUMENT_ROOT}/g" /etc/nginx/conf.d/default.conf
-COPY .dctl/containers/nginx/conf/upstream.conf /etc/nginx/conf.d/upstream.conf
 
 EXPOSE 80
 

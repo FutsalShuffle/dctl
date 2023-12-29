@@ -1,5 +1,5 @@
 version: 1
-name: projectName
+name: example
 
 docker:
   enabled: true
@@ -11,37 +11,52 @@ k8:
 containers:
   nginx:
     ports:
-      - "80:80"
+      - "${HTTP_PORT}:80"
     build:
       context: .
       dockerfile: ./.dctl/containers/nginx/Dockerfile
       args:
         USER_ID: "$USER_ID"
         GROUP_ID: "$GROUP_ID"
-        DOCUMENT_ROOT: "$DOCUMENT_ROOT"
     depends_on:
       - postgres
     volumes:
-      - .:/var/www/html
+      - ./static:/app/static
+      - ./media:/app/media
       - ./.dctl/logs/nginx:/var/log/nginx
     links:
-      - php
+      - django
     restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV}
+    networks:
+      default:
+        aliases:
+          - site.root
 
-  php:
+  django:
     build:
       context: .
-      dockerfile: ./.dctl/containers/php/Dockerfile
+      dockerfile: ./dctl/containers/django/Dockerfile
       args:
         USER_ID: ${USER_ID}
         GROUP_ID: ${GROUP_ID}
     volumes:
-      - .:/var/www/html
-      - ./.dctl/data/sessions:/var/www/sessions
+      - ./static:/app/static
+      - ./media:/app/media
+      - .:/app
     links:
       - postgres
-      - redis
     restart: unless-stopped
+    #    command: gunicorn main.wsgi:application --bind 0.0.0.0:8000
+    environment:
+      DEBUG: "True"
+      DJANGO_DB: postgresql
+      POSTGRES_HOST: postgres
+      POSTGRES_NAME: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PORT: 5432
 
   postgres:
     build:
@@ -69,4 +84,11 @@ commands:
     vendor: postgres
     container: postgres
   run:
-    container: php
+    container: django
+  extra:
+    - name: create-admin
+      command: docker exec -it example_django python manage.py createsuperuser
+    - name: static
+      command: docker exec -it example_django python manage.py collectstatic --noinput
+    - name: migrate
+      command: docker exec -it example_django python manage.py migrate

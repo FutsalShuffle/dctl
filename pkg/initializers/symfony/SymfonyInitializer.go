@@ -1,6 +1,8 @@
 package symfony
 
 import (
+	"dctl/pkg/initializers/common"
+	"dctl/pkg/version"
 	"io"
 	"log"
 	"net/http"
@@ -22,13 +24,36 @@ func (Initializer) Init() {
 		"/containers/postgres/Dockerfile",
 		"/dctl.yaml",
 	}
+	pwd, _ := os.Getwd()
 
-	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/v0.3/templates/laravel"
+	gitIgnoreLocations := []string{
+		pwd + "/.dctl/data/postgres",
+		pwd + "/.dctl/data/sessions",
+		pwd + "/.dctl/logs/postgres",
+		pwd + "/.dctl/logs/nginx",
+		pwd + "/.dctl/logs/php",
+	}
+
+	currentVersion := version.Version
+	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/laravel"
+
+	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/postgres", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/php", os.ModePerm)
 
 	for _, file := range files {
-		out, err := os.Create("./" + file)
+		path := pwd + "/.dctl" + file
+		if file == "/dctl.yaml" {
+			path = pwd + "/dctl.yaml"
+		}
+		out, err := os.Create(path)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		defer out.Close()
@@ -38,8 +63,14 @@ func (Initializer) Init() {
 
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
+	}
+
+	for _, ignoreLoc := range gitIgnoreLocations {
+		loc, _ := os.Create(ignoreLoc)
+		_, _ = loc.WriteString(common.GetGitIgnoreContent())
+		_ = loc.Close()
 	}
 
 	log.Println("Initialized Symfony project!")

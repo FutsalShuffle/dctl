@@ -10,10 +10,6 @@ esac
 case $OSTYPE in
     linux*)     ostype="linux" ;;
     darwin*)    ostype="darwin" ;;
-#    win32)      ostype="windows" ;;
-#    windows)    ostype="windows" ;;
-#    msys)       ostype="windows" ;;
-#    cygwin)     ostype="windows" ;;
 esac
 
 if [ "$architecture" == "" ];

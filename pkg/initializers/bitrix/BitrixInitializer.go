@@ -1,6 +1,7 @@
 package bitrix
 
 import (
+	"dctl/pkg/initializers/common"
 	"dctl/pkg/version"
 	"io"
 	"log"
@@ -33,19 +34,31 @@ func (Initializer) Init() {
 	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/bitrix"
 	pwd, _ := os.Getwd()
 
-	os.MkdirAll(pwd+"/containers/nginx/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/php/conf", os.ModePerm)
-	os.MkdirAll(pwd+"/containers/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/data/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/data/sessions", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/mysql", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/nginx", os.ModePerm)
-	os.MkdirAll(pwd+"/logs/php", os.ModePerm)
+	gitIgnoreLocations := []string{
+		pwd + "/.dctl/data/mysql",
+		pwd + "/.dctl/data/sessions",
+		pwd + "/.dctl/logs/mysql",
+		pwd + "/.dctl/logs/nginx",
+		pwd + "/.dctl/logs/php",
+	}
+
+	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/containers/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/data/sessions", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/mysql", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/nginx", os.ModePerm)
+	os.MkdirAll(pwd+"/.dctl/logs/php", os.ModePerm)
 
 	for _, file := range files {
-		out, err := os.Create(pwd + file)
+		path := pwd + "/.dctl" + file
+		if file == "/dctl.yaml" {
+			path = pwd + "/dctl.yaml"
+		}
+		out, err := os.Create(path)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		defer out.Close()
@@ -55,8 +68,14 @@ func (Initializer) Init() {
 
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
+	}
+
+	for _, ignoreLoc := range gitIgnoreLocations {
+		loc, _ := os.Create(ignoreLoc)
+		_, _ = loc.WriteString(common.GetGitIgnoreContent())
+		_ = loc.Close()
 	}
 
 	log.Println("Initialized Bitrix project!")

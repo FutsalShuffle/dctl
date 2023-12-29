@@ -3,33 +3,10 @@ name: example #Название проекта (префикс в контейн
 
 docker:
   enabled: true #Генерировать ли docker-compose и Dockerfile
+  registry: "" #Для ci/cd
 
 k8:
   enabled: true #Генерировать ли kubernetes конфиги
-
-#Пока не актуально
-deployments:
-  php:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    ingress:
-      nginx:
-        paths:
-          - /
-
-  nginx:
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
 
 #Контейнеры docker-compose
 #Синтаксис как в docker-compose
@@ -45,15 +22,6 @@ containers:
     ports:
       - "6382:6379"
 
-  supervisor:
-    build:
-      context: ./containers/php
-      dockerfile: ./WorkerDockerfile
-    volumes:
-      - ./../:/var/www/html
-    links:
-      - php
-
   nginx:
     ports:
       - "80:80"
@@ -68,8 +36,8 @@ containers:
     depends_on:
       - postgres
     volumes:
-      - ./../:/var/www/html
-      - ./logs/nginx:/var/log/nginx
+      - .:/var/www/html
+      - ./.dctl/logs/nginx:/var/log/nginx
     links:
       - php
     restart: unless-stopped
@@ -86,9 +54,9 @@ containers:
         GROUP_ID: ${GROUP_ID}
         APP_ENV: "$APP_ENV"
     volumes:
-      - ./../:/var/www/html
-      - ./logs/php:/var/log/php
-      - ./data/sessions:/var/www/sessions
+      - .:/var/www/html
+      - ./.dctl/logs/php:/var/log/php
+      - ./.dctl/data/sessions:/var/www/sessions
     links:
       - postgres
       - redis
@@ -118,8 +86,8 @@ containers:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-      - ./logs/postgres:/var/log/postgresql/
+      - ./.dctl/data/postgres:/var/lib/postgresql/data
+      - ./.dctl/logs/postgres:/var/log/postgresql/
     ports:
       - "5432:5432"
     restart: always

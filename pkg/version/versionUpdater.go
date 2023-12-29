@@ -12,7 +12,7 @@ import (
 	"runtime"
 )
 
-const Version = "v0.8"
+const Version = "v0.91"
 
 type ReleasesStruct struct {
 	TagName string `json:"tag_name"`
@@ -26,7 +26,7 @@ func CheckVersion() bool {
 	releasesUrl := "https://api.github.com/repos/FutsalShuffle/dctl/releases"
 	req, err := http.Get(releasesUrl)
 	if err != nil {
-		log.Println("Failed to get latest release ", err)
+		log.Fatalln("Failed to get latest release ", err)
 	}
 
 	var result []ReleasesStruct
@@ -53,7 +53,7 @@ func UpdateVersion() bool {
 	releasesUrl := "https://api.github.com/repos/FutsalShuffle/dctl/releases"
 	req, err := http.Get(releasesUrl)
 	if err != nil {
-		log.Println("Failed to get latest release ", err)
+		log.Fatalln("Failed to get latest release ", err)
 	}
 
 	var result []ReleasesStruct

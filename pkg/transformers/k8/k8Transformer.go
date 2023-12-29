@@ -33,7 +33,7 @@ func Transform(entity *dctl.DctlEntity) {
 
 		b, err := fs.ReadFile("deployment.yaml")
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		data := string(b)
 		t := template.
@@ -48,14 +48,14 @@ func Transform(entity *dctl.DctlEntity) {
 				Parse(data))
 
 		if err != nil {
-			log.Println("executing template:", err)
+			log.Fatalln("executing template:", err)
 		}
-		pf, err := os.Create(pwd + "/k8/" + index + "-deployment" + ".yml")
+		pf, err := os.Create(pwd + "/.dctl/helm/" + index + "-deployment" + ".yml")
 		err = t.Execute(pf, deploymentEntity)
 
 		st, err := fs.ReadFile("deployment.yaml")
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		ts := template.
 			Must(template.New("service").
@@ -69,10 +69,10 @@ func Transform(entity *dctl.DctlEntity) {
 				Parse(string(st)))
 
 		if err != nil {
-			log.Println("executing template:", err)
+			log.Fatalln("executing template:", err)
 		}
 
-		pfs, err := os.Create(pwd + "/k8/" + index + "-service" + ".yml")
+		pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-service" + ".yml")
 		err = ts.Execute(pfs, deploymentEntity)
 
 		if len(deploymentEntity.Volumes) > 0 {
@@ -84,7 +84,7 @@ func Transform(entity *dctl.DctlEntity) {
 
 				stc, err := fs.ReadFile("claim.yaml")
 				if err != nil {
-					log.Println(err)
+					log.Fatalln(err)
 				}
 				tsc := template.
 					Must(template.New("service").
@@ -98,16 +98,16 @@ func Transform(entity *dctl.DctlEntity) {
 						Parse(string(stc)))
 
 				if err != nil {
-					log.Println("executing template:", err)
+					log.Fatalln("executing template:", err)
 				}
 
-				pfs, err := os.Create(pwd + "/k8/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-claim" + ".yml")
+				pfs, err := os.Create(pwd + "/.dctl/helm/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-claim" + ".yml")
 				err = tsc.Execute(pfs, claimEntity)
 			}
 		}
 	}
 
-	fmt.Println("Generated k8 files")
+	fmt.Println("Generated helm files")
 }
 
 func splitString(sep string, stringv string) []string {

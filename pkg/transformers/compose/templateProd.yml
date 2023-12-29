@@ -1,10 +1,10 @@
 ---
 version: '3'
-{{$projectName := .Name}}
+{{$projectName := .Name}} {{$docker := .Docker}}
 services:
 {{range $index, $container := .Containers}}  {{$index}}:
     container_name: {{$projectName}}_{{$index}}
-    image: {{$projectName}}/{{$index}}:prod-latest
+    image: {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
     {{ if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
     {{end}}
     {{- if $container.Ports}}ports:
@@ -15,10 +15,12 @@ services:
       {{range $container.Volumes}}- {{ . }} 
       {{end}}
     {{ end}}
+    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]{{end}}
+    {{- if $container.Entrypoint }}entrypoint: {{$container.Entrypoint}}{{end}}
     {{- if $container.Links}}links:
       {{range $container.Links}}- {{ . }} 
       {{end}}
-    {{ end}}
+    {{end}}
     {{- if $container.Restart}}restart: {{$container.Restart}}
     {{end}}
     {{- if $container.DependsOn}}depends_on:

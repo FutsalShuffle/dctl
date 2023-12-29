@@ -16,10 +16,7 @@ type GitlabStageStruct struct {
 	Require      string   `yaml:"require"`
 	Timeout      int      `yaml:"timeout"`
 	Tags         string   `yaml:"tags"`
-	Rules        []struct {
-		If   string
-		When string
-	}
+	Only         []string `yaml:"only"`
 }
 
 type DctlEntity struct {
@@ -40,6 +37,7 @@ type DctlEntity struct {
 		DependsOn   []string          `yaml:"depends_on"`
 		Restart     string            `yaml:"restart"`
 		Environment map[string]string `yaml:"environment"`
+		Entrypoint  string            `yaml:"entrypoint"`
 		Command     []string          `yaml:"command"`
 		Build       struct {
 			Context    string            `yaml:"context"`
@@ -70,7 +68,17 @@ type DctlEntity struct {
 		Cache struct {
 			Paths []string `yaml:"paths"`
 		} `yaml:"cache"`
-		Tests  []GitlabStageStruct `yaml:"tests"`
-		Deploy []GitlabStageStruct `yaml:"deploy"`
+		OnlyWhen GitlabWorkflow      `yaml:"only_when" default:"merge_request"`
+		Tests    []GitlabStageStruct `yaml:"tests"`
+		Deploy   []GitlabStageStruct `yaml:"deploy"`
 	} `yaml:"gitlab"`
 }
+
+type GitlabWorkflow string
+
+const (
+	MERGE_REQUEST        GitlabWorkflow = "merge_request"
+	ALWAYS               GitlabWorkflow = "always"
+	MERGE_REQUEST_MASTER GitlabWorkflow = "merge_request_master"
+	NEVER                GitlabWorkflow = "never"
+)

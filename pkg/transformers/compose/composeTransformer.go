@@ -23,7 +23,7 @@ func Transform(entity *dctl.DctlEntity) {
 	pwd, _ := os.Getwd()
 	b, err := fs.ReadFile("template.yml")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	data := string(b)
 
@@ -32,7 +32,7 @@ func Transform(entity *dctl.DctlEntity) {
 			Funcs(template.FuncMap{"join": join}).
 			Parse(data))
 	if err != nil {
-		log.Println("executing template:", err)
+		log.Fatalln("executing template:", err)
 	}
 
 	pf, err := os.Create(pwd + "/docker-compose.yml")
@@ -40,7 +40,7 @@ func Transform(entity *dctl.DctlEntity) {
 
 	pt, err := fs.ReadFile("templateProd.yml")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	dataProd := string(pt)
 
@@ -61,23 +61,23 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 			continue
 		}
 
-		dockerFile := "FROM " + container.Image + "" +
-			"" +
+		dockerFile := "FROM " + container.Image + "\n" +
+			"ARG USER_ID='1000'\nARG USER_ID=${USER_ID}\nENV USER_ID=${USER_ID}\n\nARG GROUP_ID='1000'\nARG GROUP_ID=${GROUP_ID}\nENV GROUP_ID=${GROUP_ID}\n" +
 			""
 
 		pwd, _ := os.Getwd()
-		os.MkdirAll(pwd+"/containers/"+index, os.ModePerm)
-		f, err := os.Create(pwd + "/containers/" + index + "/Dockerfile")
+		os.MkdirAll(pwd+"/.dctl/containers/"+index, os.ModePerm)
+		f, err := os.Create(pwd + "/.dctl/containers/" + index + "/Dockerfile")
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		defer f.Close()
 		_, err = f.WriteString(dockerFile)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
-		container.Build.Dockerfile = "./containers/" + index + "/Dockerfile"
+		container.Build.Dockerfile = "./.dctl/containers/" + index + "/Dockerfile"
 		container.Build.Context = "."
 		container.Image = ""
 	}

@@ -1,4 +1,4 @@
-{{$deploymentName := .Name -}}
+{{$deploymentName := .Name -}} {{$dockerRegistry := .Docker.Registry -}}
 {{$projectName := .ProjectName -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -25,7 +25,7 @@ spec:
             - name: {{$name}}
               value: {{$value}}{{end}}
         {{end}}
-          image: {{$projectName}}/{{$deploymentName}}:prod-latest
+          image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
           name: {{$projectName}}-{{$deploymentName}}
           {{- if .Ports }}
           ports:
