@@ -19,6 +19,30 @@ type GitlabStageStruct struct {
 	Only         []string `yaml:"only"`
 }
 
+type Deployment struct {
+	Enabled bool `yaml:"enabled" default:"true"`
+	Ingress struct {
+		Paths []struct {
+			Path string
+			Port string
+		} `yaml:"paths"`
+		Enabled bool `yaml:"enabled" default:"false"`
+	} `yaml:"ingress"`
+	Secret    bool     `yaml:"secret" default:"false"`
+	Ports     []string `yaml:"ports"`
+	Restart   string   `yaml:"restart" default:"Always"`
+	Resources struct {
+		Limits struct {
+			Cpu    string `yaml:"cpu"`
+			Memory string `yaml:"memory"`
+		} `yaml:"limits"`
+		Requests struct {
+			Cpu    string `yaml:"cpu"`
+			Memory string `yaml:"memory"`
+		} `yaml:"requests"`
+	} `yaml:"resources"`
+}
+
 type DctlEntity struct {
 	Version float32 `yaml:"version"`
 	Name    string  `yaml:"name"`
@@ -45,13 +69,8 @@ type DctlEntity struct {
 			Args       map[string]string `yaml:"args"`
 		} `yaml:"build"`
 	} `yaml:"containers"`
-	Deployments map[string]struct {
-		//Resources string `yaml:"resources"`
-		Ingress map[string]struct {
-			Paths []string `yaml:"paths"`
-		} `yaml:"ingress"`
-	} `yaml:"deployments"`
-	Commands struct {
+	Deployments map[string]Deployment `yaml:"deployments"`
+	Commands    struct {
 		Db struct {
 			Vendor    string `default:"mysql" yaml:"vendor"`
 			Container string `default:"mysql" yaml:"container"`

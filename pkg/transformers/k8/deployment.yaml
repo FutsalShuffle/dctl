@@ -1,45 +1,64 @@
-{{$deploymentName := .Name -}} {{$dockerRegistry := .Docker.Registry -}}
+{{$deploymentName := .Name -}} {{$dockerRegistry := .DockerRegistry -}}
 {{$projectName := .ProjectName -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    io.kompose.service: {{.Name}}
+    app: {{.Name}}
   name: {{.Name}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: {{.Name}}
+      app: {{.Name}}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        io.kompose.service: {{.Name}}
+        app: {{.Name}}
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
-        {{- if .Environment }}
-        - env:
-            {{ range $name, $value := .Environment}}
-            - name: {{$name}}
-              value: {{$value}}{{end}}
-        {{end}}
-          image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
-          name: {{$projectName}}-{{$deploymentName}}
-          {{- if .Ports }}
-          ports:
-            - containerPort: {{getInnerPort .Ports}}{{end}}
-          resources: {}
-          volumeMounts:
-          {{ range $index, $value := .Volumes}}
-            - mountPath: {{getMountPath $value}}
-              name: {{$deploymentName}}-claim{{$index}}{{end}}
-      restartPolicy: Always
+          - name: {{$projectName}}-{{$deploymentName}}
+            image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
+            ports:
+            {{- if .Ports }}
+            {{- range $port := .Ports }}
+              - containerPort: {{ getPortTwo $port }}
+            {{ end }} {{ end }}
+            volumeMounts:
+            {{ range $index, $value := .Volumes}}
+              - mountPath: {{getMountPath $value}}
+                name: {{$deploymentName}}-claim{{$index}}{{end}}
+            {{- if .Environment }}
+            env:
+              {{- range $name, $value := .Environment }}
+              - name: {{$name}}
+                value: {{$value}}
+              {{end -}}
+            {{end}}
+            resources:
+              {{- if or .Resources.Requests.Memory .Resources.Requests.Cpu }}
+              requests:
+                memory: {{ .Resources.Requests.Memory }}
+                cpu: {{ .Resources.Requests.Cpu }}
+              {{- end}}
+              {{- if or .Resources.Limits.Memory .Resources.Limits.Cpu }}
+              limits:
+                memory: {{ .Resources.Limits.Memory }}
+                cpu: {{ .Resources.Limits.Cpu }}
+              {{- end}}
+      restartPolicy: {{ .Restart }}
+#      hostAliases:
+#        - ip: 127.0.0.1
+#          hostnames:
+#            {{range $container := .Containers}}- {{$container}}
+#            {{end}}
       volumes:
         {{ range $index, $value := .Volumes }}
         - name: {{$deploymentName}}-claim{{$index}}
           persistentVolumeClaim:
             claimName: {{$deploymentName}}-claim{{$index}}
-        {{end}}
-status: {}
+            {{end}}

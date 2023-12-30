@@ -205,7 +205,7 @@ if [ "$1" == "push-docker-prod" ];
     if [ "$2" == "" ];
         then
           cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
-          ./dctl.sh push-docker {{$index}}{{end}}
+          ./dctl.sh push-docker-prod {{$index}}{{end}}
     fi
 fi
 

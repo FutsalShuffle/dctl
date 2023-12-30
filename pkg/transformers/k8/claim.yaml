@@ -1,13 +1,30 @@
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{.Name}}-volume{{.Index}}
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 300Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: {{getHostPath .Volume}}
+
+---
+
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    io.kompose.service: {{.Name}}-claim{{.Index}}
+    app: {{.Name}}-claim{{.Index}}
   name: {{.Name}}-claim{{.Index}}
 spec:
+  storageClassName: manual
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
-      storage: 100Mi
-status: {}
+      storage: 300Mi
