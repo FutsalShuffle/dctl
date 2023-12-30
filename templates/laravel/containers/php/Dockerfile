@@ -32,5 +32,6 @@ RUN sed -i -e "s/www-data:x:82:www-data/www-data:x:${GROUP_ID}:www-data/g" /etc/
 RUN apk add bash
 
 RUN cd /bin && curl --silent --show-error https://getcomposer.org/installer | php && mv composer.phar composer && chmod 777 composer
+RUN chown -R www-data:www-data /var/www/html
 WORKDIR /var/www/html
 EXPOSE 9000

@@ -18,8 +18,9 @@ spec:
       labels:
         app: {{.Name}}
     spec:
-      securityContext:
-        fsGroup: 1000
+#      securityContext:
+#        runAsUser: 1000
+#        fsGroup: 1000
       containers:
           - name: {{$projectName}}-{{$deploymentName}}
             image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
@@ -27,7 +28,8 @@ spec:
             {{- if .Ports }}
             {{- range $port := .Ports }}
               - containerPort: {{ getPortTwo $port }}
-            {{ end }} {{ end }}
+            {{ end }}{{ end }}
+            imagePullPolicy: Always
             volumeMounts:
             {{ range $index, $value := .Volumes}}
               - mountPath: {{getMountPath $value}}
@@ -50,7 +52,7 @@ spec:
                 memory: {{ .Resources.Limits.Memory }}
                 cpu: {{ .Resources.Limits.Cpu }}
               {{- end}}
-      restartPolicy: {{ .Restart }}
+      restartPolicy: {{ or .Restart "Always" }}
 #      hostAliases:
 #        - ip: 127.0.0.1
 #          hostnames:
