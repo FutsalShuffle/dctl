@@ -19,6 +19,22 @@ type GitlabStageStruct struct {
 	Only         []string `yaml:"only"`
 }
 
+type LifecycleHandler struct {
+	Exec struct {
+		Command []string `yaml:"command"`
+	} `yaml:"exec"`
+	HttpGet struct {
+		Host        string `yaml:"host"`
+		HttpHeaders []struct {
+			Name  string `yaml:"name"`
+			Value string `yaml:"value"`
+		} `yaml:"httpHeaders"`
+		Path   string `yaml:"path"`
+		Port   string `yaml:"port"`
+		Scheme string `yaml:"scheme" default:"http"`
+	} `yaml:"httpGet"`
+}
+
 type Deployment struct {
 	Ingress struct {
 		Paths []struct {
@@ -61,7 +77,11 @@ type DeploymentContainer struct {
 		MountPath string `yaml:"mountPath"`
 		Enabled   bool   `yaml:"enabled" default:"false"`
 	} `yaml:"emptyDir"`
-	Env map[string]string `yaml:"env"`
+	Env       map[string]string `yaml:"env"`
+	Lifecycle struct {
+		PostStart LifecycleHandler `yaml:"postStart"`
+		PreStop   LifecycleHandler `yaml:"preStop"`
+	}
 }
 
 type DctlEntity struct {

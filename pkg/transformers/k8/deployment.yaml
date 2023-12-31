@@ -1,4 +1,4 @@
-{{- $deploymentName := .Name }} {{$deployment := .Deployment }} {{$projectName := .ProjectName}}
+{{ $deploymentName := .Name }}{{$deployment := .Deployment }}{{$projectName := .ProjectName -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,8 +43,8 @@ spec:
             env:
               {{- range $name, $value := .Env }}
               - name: {{$name}}
-                value: {{$value}}
-              {{end -}}{{end}}
+                value: {{$value}}{{end -}}
+              {{end}}
             resources:
               {{- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu }}
               requests:
@@ -56,7 +56,18 @@ spec:
                 memory: {{ .Resources.Limits.Memory }}
                 cpu: {{ .Resources.Limits.Cpu }}
               {{- end}}
-          {{- end}}
+            lifecycle:
+              {{if or .Lifecycle.PostStart.Exec.Command .Lifecycle.PostStart.HttpGet.Host}}postStart:
+                {{if .Lifecycle.PostStart.Exec.Command}}command: {{range $command := .Lifecycle.PostStart.Exec.Command}}
+                  - {{$command}}{{end}}
+                {{end -}}
+              {{end -}}
+              {{if or .Lifecycle.PreStop.Exec.Command .Lifecycle.PreStop.HttpGet.Host}}preStop:
+                {{if .Lifecycle.PreStop.Exec.Command}}command: {{range $command := .Lifecycle.PreStop.Exec.Command}}
+                  - {{$command}}{{end}}
+                {{end -}}
+              {{end -}}
+        {{- end}}
       restartPolicy: {{ or .Deployment.Restart "Always" }}
       hostAliases:
         - ip: 127.0.0.1
