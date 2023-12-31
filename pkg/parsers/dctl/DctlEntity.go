@@ -20,7 +20,6 @@ type GitlabStageStruct struct {
 }
 
 type Deployment struct {
-	Enabled bool `yaml:"enabled" default:"true"`
 	Ingress struct {
 		Paths []struct {
 			Path string
@@ -28,9 +27,23 @@ type Deployment struct {
 		} `yaml:"paths"`
 		Enabled bool `yaml:"enabled" default:"false"`
 	} `yaml:"ingress"`
-	Secret    bool     `yaml:"secret" default:"false"`
-	Ports     []string `yaml:"ports"`
-	Restart   string   `yaml:"restart" default:"Always"`
+	Secret  bool   `yaml:"secret" default:"false"`
+	Restart string `yaml:"restart" default:"Always"`
+	Pvc     []struct {
+		Storage string `yaml:"storage"`
+		Src     string `yaml:"src"`
+		Dest    string `yaml:"dest"`
+	} `yaml:"pvc"`
+	EmptyDir struct {
+		SizeLimit string `yaml:"sizeLimit"`
+		Enabled   bool   `yaml:"enabled" default:"false"`
+	} `yaml:"emptyDir"`
+	Replicas   int                            `yaml:"replicas"`
+	Service    bool                           `yaml:"service" default:"true"`
+	Containers map[string]DeploymentContainer `yaml:"containers"`
+}
+
+type DeploymentContainer struct {
 	Resources struct {
 		Limits struct {
 			Cpu    string `yaml:"cpu"`
@@ -41,6 +54,14 @@ type Deployment struct {
 			Memory string `yaml:"memory"`
 		} `yaml:"requests"`
 	} `yaml:"resources"`
+	Ports    []string `yaml:"ports"`
+	Volumes  []string `yaml:"volumes"`
+	Image    string   `yaml:"image"`
+	EmptyDir struct {
+		MountPath string `yaml:"mountPath"`
+		Enabled   bool   `yaml:"enabled" default:"false"`
+	} `yaml:"emptyDir"`
+	Env map[string]string `yaml:"env"`
 }
 
 type DctlEntity struct {

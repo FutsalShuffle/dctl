@@ -2,16 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: {{.Name}}
-  name: {{.Name}}
+    app: {{.ProjectName}}-{{.Name}}
+  name: {{.ProjectName}}-{{.Name}}
 spec:
   ports:
-    {{ range $index, $value := .Ports }}
+    {{- range $containerName, $container := .Deployment.Containers}}{{ range $index, $value := .Ports }}
     - name: "{{getPortTwo $value}}"
       port: {{getPortOne $value}}
       targetPort: {{getPortTwo $value}}
-  {{end -}}
+    {{end}}{{- end}}
   selector:
-    app: {{.Name}}
-  clusterIP: None
-
+    app: {{.ProjectName}}-{{.Name}}
+  type: ClusterIP

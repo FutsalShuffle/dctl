@@ -1,66 +1,76 @@
-{{$deploymentName := .Name -}} {{$dockerRegistry := .DockerRegistry -}}
-{{$projectName := .ProjectName -}}
+{{- $deploymentName := .Name }} {{$deployment := .Deployment }} {{$projectName := .ProjectName}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: {{.Name}}
-  name: {{.Name}}
+    app: {{$projectName}}-{{.Name}}
+  name: {{$projectName}}-{{.Name}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{.Name}}
+      app: {{$projectName}}-{{.Name}}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: {{.Name}}
+        app: {{$projectName}}-{{.Name}}
     spec:
+      replicas: {{ or .Deployment.Replicas 1 }}
 #      securityContext:
 #        runAsUser: 1000
 #        fsGroup: 1000
       containers:
-          - name: {{$projectName}}-{{$deploymentName}}
-            image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
+          {{- range $containerName, $container := .Deployment.Containers}}
+          - name: {{$projectName}}-{{$deploymentName}}-{{$containerName}}
+            image: {{.Image}}
             ports:
-            {{- if .Ports }}
-            {{- range $port := .Ports }}
+            {{- if $container.Ports }}
+            {{- range $port := $container.Ports }}
               - containerPort: {{ getPortTwo $port }}
-            {{ end }}{{ end }}
+            {{ end }}{{- end }}
             imagePullPolicy: Always
             volumeMounts:
-            {{ range $index, $value := .Volumes}}
-              - mountPath: {{getMountPath $value}}
-                name: {{$deploymentName}}-claim{{$index}}{{end}}
-            {{- if .Environment }}
+              {{- if .EmptyDir.Enabled }}
+              - mountPath: {{ .EmptyDir.MountPath }}
+                name: emptydir-volume
+              {{- end }}
+            {{if $deployment.Pvc}}{{ range $index, $value := $deployment.Pvc}}
+              - mountPath: {{ $value.Dest }}
+                name: {{$deploymentName}}-pv{{$index}}{{end}}{{end}}
+            {{- if .Env }}
             env:
-              {{- range $name, $value := .Environment }}
+              {{- range $name, $value := .Env }}
               - name: {{$name}}
                 value: {{$value}}
-              {{end -}}
-            {{end}}
+              {{end -}}{{end}}
             resources:
-              {{- if or .Resources.Requests.Memory .Resources.Requests.Cpu }}
+              {{- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu }}
               requests:
                 memory: {{ .Resources.Requests.Memory }}
                 cpu: {{ .Resources.Requests.Cpu }}
               {{- end}}
-              {{- if or .Resources.Limits.Memory .Resources.Limits.Cpu }}
+              {{- if or .Resources.Limits.Memory $container.Resources.Limits.Cpu }}
               limits:
                 memory: {{ .Resources.Limits.Memory }}
                 cpu: {{ .Resources.Limits.Cpu }}
               {{- end}}
-      restartPolicy: {{ or .Restart "Always" }}
-#      hostAliases:
-#        - ip: 127.0.0.1
-#          hostnames:
-#            {{range $container := .Containers}}- {{$container}}
-#            {{end}}
-      volumes:
-        {{ range $index, $value := .Volumes }}
-        - name: {{$deploymentName}}-claim{{$index}}
-          persistentVolumeClaim:
-            claimName: {{$deploymentName}}-claim{{$index}}
+          {{- end}}
+      restartPolicy: {{ or .Deployment.Restart "Always" }}
+      hostAliases:
+        - ip: 127.0.0.1
+          hostnames:
+            {{range $containerName, $container := .Deployment.Containers}}- {{$containerName}}
             {{end}}
+      volumes:
+        {{- if .Deployment.EmptyDir.Enabled }}
+        - name: emptydir-volume
+          emptyDir: {{if .Deployment.EmptyDir.SizeLimit}}
+            sizeLimit: {{or .Deployment.EmptyDir.SizeLimit "512Mi" }}{{end}}
+        {{ end }}
+        {{- if $deployment.Pvc}}{{ range $index, $value := .Deployment.Pvc }}
+        - name: {{$deploymentName}}-pv{{$index}}
+          persistentVolumeClaim:
+            claimName: {{$deploymentName}}-pvc{{$index}}
+            {{end}}{{end -}}

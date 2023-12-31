@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -22,41 +23,13 @@ func Transform(entity *dctl.DctlEntity) {
 	}
 	pwd, _ := os.Getwd()
 	_ = os.MkdirAll(pwd+"/.dctl/helm", os.ModePerm)
-	var allContainerNames []string
-	for index, _ := range entity.Containers {
-		allContainerNames = append(allContainerNames, index)
-	}
+	entityNew := processDeployments(entity)
 
-	for index, container := range entity.Containers {
-		var deploymentStruct dctl.Deployment
-		for indexD, deployment := range entity.Deployments {
-			if indexD == index {
-				deploymentStruct = deployment
-			}
-		}
-		fmt.Println(deploymentStruct)
-		if deploymentStruct.Enabled == false {
-			continue
-		}
-
-		ports := container.Ports
-		if len(deploymentStruct.Ports) > 0 {
-			ports = []string{}
-			for _, port := range deploymentStruct.Ports {
-				ports = append(ports, port+":"+port)
-			}
-		}
-
+	for index, deployment := range entityNew.Deployments {
 		deploymentEntity := K8DeploymentEntity{
-			Name:           index,
-			Ports:          ports,
-			Environment:    container.Environment,
-			ProjectName:    entity.Name,
-			DockerRegistry: entity.Docker.Registry,
-			Containers:     allContainerNames,
-			Ingress:        deploymentStruct.Ingress,
-			Resources:      deploymentStruct.Resources,
-			Restart:        deploymentStruct.Restart,
+			Deployment:  deployment,
+			Name:        index,
+			ProjectName: entity.Name,
 		}
 
 		b, err := fs.ReadFile("deployment.yaml")
@@ -78,73 +51,75 @@ func Transform(entity *dctl.DctlEntity) {
 		if err != nil {
 			log.Fatalln("executing template:", err)
 		}
+
 		pf, err := os.Create(pwd + "/.dctl/helm/" + index + "-deployment" + ".yml")
 		err = t.Execute(pf, deploymentEntity)
 
-		pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-service" + ".yml")
-		sf, err := fs.ReadFile("service.yaml")
-		if err != nil {
-			log.Fatalln(err)
-		}
-		sttemplate := template.
-			Must(template.New("service").
-				Funcs(template.FuncMap{
-					"getPortOne": getPortOne,
-					"getPortTwo": getPortTwo,
-				}).
-				Parse(string(sf)))
+		if deployment.Service == true {
+			pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-service" + ".yml")
+			sf, err := fs.ReadFile("service.yaml")
+			if err != nil {
+				log.Fatalln(err)
+			}
 
-		if err != nil {
-			log.Fatalln("executing template:", err)
-		}
-		err = sttemplate.Execute(pfs, deploymentEntity)
+			sttemplate := template.
+				Must(template.New("service").
+					Funcs(template.FuncMap{
+						"getPortOne": getPortOne,
+						"getPortTwo": getPortTwo,
+					}).
+					Parse(string(sf)))
 
-		if deploymentEntity.Ingress.Enabled == false {
-			continue
-		}
-
-		inf, err := os.Create(pwd + "/.dctl/helm/" + index + "-ingress" + ".yml")
-		inft, err := fs.ReadFile("ingress.yaml")
-		if err != nil {
-			log.Fatalln(err)
+			if err != nil {
+				log.Fatalln("executing template:", err)
+			}
+			err = sttemplate.Execute(pfs, deploymentEntity)
 		}
 
-		inftemplate := template.
-			Must(template.New("ingress").
-				Parse(string(inft)))
+		if deployment.Ingress.Enabled == true {
+			inf, err := os.Create(pwd + "/.dctl/helm/" + index + "-ingress" + ".yml")
+			inft, err := fs.ReadFile("ingress.yaml")
+			if err != nil {
+				log.Fatalln(err)
+			}
 
-		if err != nil {
-			log.Fatalln("executing template:", err)
+			inftemplate := template.
+				Must(template.New("ingress").
+					Parse(string(inft)))
+
+			if err != nil {
+				log.Fatalln("executing template:", err)
+			}
+			err = inftemplate.Execute(inf, deploymentEntity)
 		}
-		err = inftemplate.Execute(inf, deploymentEntity)
+
 		//
-		//if len(deploymentEntity.Volumes) > 0 {
-		//	for index, volume := range deploymentEntity.Volumes {
-		//		claimEntity := K8ClaimEntity{
-		//			Name:   deploymentEntity.Name,
-		//			Index:  index,
-		//			Volume: volume,
-		//		}
-		//
-		//		stc, err := fs.ReadFile("claim.yaml")
-		//		if err != nil {
-		//			log.Fatalln(err)
-		//		}
-		//		tsc := template.
-		//			Must(template.New("claim").
-		//				Funcs(template.FuncMap{
-		//					"getHostPath": getHostPath,
-		//				}).
-		//				Parse(string(stc)))
-		//
-		//		if err != nil {
-		//			log.Fatalln("executing template:", err)
-		//		}
-		//
-		//		pfs, err := os.Create(pwd + "/.dctl/helm/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-claim" + ".yml")
-		//		err = tsc.Execute(pfs, claimEntity)
-		//	}
-		//}
+		if len(deployment.Pvc) > 0 {
+			for index, volume := range deployment.Pvc {
+				claimEntity := K8ClaimEntity{
+					Name:        deploymentEntity.Name,
+					Index:       index,
+					Src:         volume.Src,
+					Dest:        volume.Dest,
+					ProjectName: entity.Name,
+				}
+
+				stc, err := fs.ReadFile("claim.yaml")
+				if err != nil {
+					log.Fatalln(err)
+				}
+				tsc := template.
+					Must(template.New("claim").
+						Parse(string(stc)))
+
+				if err != nil {
+					log.Fatalln("executing template:", err)
+				}
+
+				pfs, err := os.Create(pwd + "/.dctl/helm/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-pvc" + ".yml")
+				err = tsc.Execute(pfs, claimEntity)
+			}
+		}
 	}
 
 	fmt.Println("Generated helm files")
@@ -163,4 +138,53 @@ func getPortOne(stringv string) string {
 }
 func getPortTwo(stringv string) string {
 	return strings.Split(stringv, ":")[1]
+}
+
+func processDeployments(entity *dctl.DctlEntity) *dctl.DctlEntity {
+	for index, _ := range entity.Deployments {
+		for containerName, container := range entity.Deployments[index].Containers {
+			containerP := container
+
+			//Автоподстановка Image
+			if container.Image == "" {
+				image := entity.Docker.Registry
+				if image != "" {
+					image = image + "/" + entity.Name + "/" + containerName + ":prod-latest"
+				} else {
+					image = entity.Name + "/" + containerName + ":prod-latest"
+				}
+				containerP.Image = image
+			}
+
+			//Автоконфиг портов из compose если не указано.
+			ports := container.Ports
+			if len(ports) > 0 {
+				ports = []string{}
+				for _, port := range container.Ports {
+					ports = append(ports, port+":"+port)
+				}
+				containerP.Ports = ports
+			} else {
+				for dcn, dc := range entity.Containers {
+					if dcn == containerName {
+						containerP.Ports = dc.Ports
+					}
+				}
+			}
+
+			//Автоподстановка Env из compose
+			env := container.Env
+			if len(env) == 0 {
+				for dcn, dc := range entity.Containers {
+					if dcn == containerName {
+						containerP.Env = dc.Environment
+					}
+				}
+			}
+
+			entity.Deployments[index].Containers[containerName] = containerP
+		}
+	}
+
+	return entity
 }

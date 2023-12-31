@@ -6,7 +6,39 @@ docker:
   registry: "" #Для CI/CD
 
 k8:
-  enabled: false
+  enabled: true
+
+deployments:
+  app:
+    service: true
+    replicas: 2
+    ingress:
+      enabled: true
+      paths:
+        - path: "/"
+          port: 80
+    containers:
+      php:
+        ports:
+          - 9000
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      postgres:
+      nginx:
+        ports:
+          - 80
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
 
 containers:
   nginx:
