@@ -1,34 +1,15 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: {{.ProjectName}}-{{.Name}}-pv{{.Index}}
-  labels:
-    type: local
-spec:
-  claimRef:
-    name: {{.ProjectName}}-{{.Name}}-pvc{{.Index}}
-    namespace: foo
-  storageClassName: ""
-  capacity:
-    storage: {{ or .Storage "300Mi" }}
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: {{ .Src }}
-
+{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{- range $index, $pvc := .Deployment.Pvc }}
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    app: {{.ProjectName}}-{{.Name}}-pvc{{.Index}}
-  name: {{.ProjectName}}-{{.Name}}-pvc{{.Index}}
+    app: {{ $projectName }}-{{ $deploymentName }}
+  name: {{$deploymentName}}-pvc-{{$pvc.Name}}
 spec:
-  volumeName: {{.ProjectName}}-{{.Name}}-pv{{.Index}}
-  storageClassName: ""
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
-      storage: {{ or .Storage "300Mi" }}
+      storage: {{ or $pvc.Storage "300Mi" }}
+{{end}}

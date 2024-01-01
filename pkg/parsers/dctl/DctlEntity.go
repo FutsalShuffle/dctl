@@ -47,8 +47,7 @@ type Deployment struct {
 	Restart string `yaml:"restart" default:"Always"`
 	Pvc     []struct {
 		Storage string `yaml:"storage"`
-		Src     string `yaml:"src"`
-		Dest    string `yaml:"dest"`
+		Name    string `yaml:"name"`
 	} `yaml:"pvc"`
 	EmptyDir struct {
 		SizeLimit string `yaml:"sizeLimit"`
@@ -70,9 +69,12 @@ type DeploymentContainer struct {
 			Memory string `yaml:"memory"`
 		} `yaml:"requests"`
 	} `yaml:"resources"`
-	Ports    []string `yaml:"ports"`
-	Volumes  []string `yaml:"volumes"`
-	Image    string   `yaml:"image"`
+	Ports []string `yaml:"ports"`
+	Pvc   []struct {
+		Name      string `yaml:"name"`
+		MountPath string `yaml:"mountPath"`
+	} `yaml:"pvc"`
+	Image    string `yaml:"image"`
 	EmptyDir struct {
 		MountPath string `yaml:"mountPath"`
 		Enabled   bool   `yaml:"enabled" default:"false"`

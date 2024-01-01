@@ -18,9 +18,10 @@ spec:
         app: {{$projectName}}-{{.Name}}
     spec:
       replicas: {{ or .Deployment.Replicas 1 }}
-#      securityContext:
-#        runAsUser: 1000
-#        fsGroup: 1000
+      {{- if or .Deployment.EmptyDir.Enabled .Deployment.Pvc }}
+      securityContext:
+        fsGroup: 1000
+      {{- end}}
       containers:
           {{- range $containerName, $container := .Deployment.Containers}}
           - name: {{$projectName}}-{{$deploymentName}}-{{$containerName}}
@@ -36,9 +37,9 @@ spec:
               - mountPath: {{ .EmptyDir.MountPath }}
                 name: emptydir-volume
               {{- end }}
-            {{if $deployment.Pvc}}{{ range $index, $value := $deployment.Pvc}}
-              - mountPath: {{ $value.Dest }}
-                name: {{$deploymentName}}-pv{{$index}}{{end}}{{end}}
+            {{if $container.Pvc}}{{ range $index, $value := $container.Pvc}}
+              - mountPath: {{ $value.MountPath }}
+                name: {{$deploymentName}}-persistant-{{$value.Name}}{{end}}{{end}}
             {{- if .Env }}
             env:
               {{- range $name, $value := .Env }}
@@ -81,7 +82,38 @@ spec:
             sizeLimit: {{or .Deployment.EmptyDir.SizeLimit "512Mi" }}{{end}}
         {{ end }}
         {{- if $deployment.Pvc}}{{ range $index, $value := .Deployment.Pvc }}
-        - name: {{$deploymentName}}-pv{{$index}}
+        - name: {{$deploymentName}}-persistant-{{$value.Name}}
           persistentVolumeClaim:
-            claimName: {{$deploymentName}}-pvc{{$index}}
-            {{end}}{{end -}}
+            claimName: {{$deploymentName}}-pvc-{{$value.Name}}
+            {{end}}{{end}}
+      initContainers:
+      {{- if .Deployment.Pvc }}
+        - name: volume-pvc-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown 0:1000 {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }} {{ $pvc.MountPath }} {{- end }}{{- end }} &&
+              /bin/chmod 775 {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }} {{ $pvc.MountPath }} {{- end }}{{- end }}
+          volumeMounts:
+       {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }}
+        - name: {{$pvc.Name}}
+          mountPath: {{ $pvc.MountPath }}
+        {{ end }}{{- end }}
+        {{- end }}
+        {{- if .Deployment.EmptyDir.Enabled }}
+        - name: emptydir-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown -R 0:1000 /emptyDir &&
+              /bin/chmod -R 1775 /emptyDir
+          volumeMounts:
+            - name: emptydir-volume
+              mountPath: "/emptyDir"
+        {{- end }}

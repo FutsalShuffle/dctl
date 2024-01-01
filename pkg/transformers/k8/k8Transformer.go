@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"text/template"
 )
@@ -22,7 +21,15 @@ func Transform(entity *dctl.DctlEntity) {
 		return
 	}
 	pwd, _ := os.Getwd()
-	_ = os.MkdirAll(pwd+"/.dctl/helm", os.ModePerm)
+	err := os.RemoveAll(pwd + "/.dctl/helm")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = os.MkdirAll(pwd+"/.dctl/helm", os.ModePerm)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	entityNew := processDeployments(entity)
 
 	for index, deployment := range entityNew.Deployments {
@@ -32,6 +39,7 @@ func Transform(entity *dctl.DctlEntity) {
 			ProjectName: entity.Name,
 		}
 
+		//Deployment
 		b, err := fs.ReadFile("deployment.yaml")
 		if err != nil {
 			log.Fatalln(err)
@@ -55,6 +63,7 @@ func Transform(entity *dctl.DctlEntity) {
 		pf, err := os.Create(pwd + "/.dctl/helm/" + index + "-deployment" + ".yml")
 		err = t.Execute(pf, deploymentEntity)
 
+		//Service
 		if deployment.Service == true {
 			pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-service" + ".yml")
 			sf, err := fs.ReadFile("service.yaml")
@@ -76,6 +85,7 @@ func Transform(entity *dctl.DctlEntity) {
 			err = sttemplate.Execute(pfs, deploymentEntity)
 		}
 
+		//Ingress
 		if deployment.Ingress.Enabled == true {
 			inf, err := os.Create(pwd + "/.dctl/helm/" + index + "-ingress" + ".yml")
 			inft, err := fs.ReadFile("ingress.yaml")
@@ -93,32 +103,22 @@ func Transform(entity *dctl.DctlEntity) {
 			err = inftemplate.Execute(inf, deploymentEntity)
 		}
 
-		//
+		//Pvc storage
 		if len(deployment.Pvc) > 0 {
-			for index, volume := range deployment.Pvc {
-				claimEntity := K8ClaimEntity{
-					Name:        deploymentEntity.Name,
-					Index:       index,
-					Src:         volume.Src,
-					Dest:        volume.Dest,
-					ProjectName: entity.Name,
-				}
-
-				stc, err := fs.ReadFile("claim.yaml")
-				if err != nil {
-					log.Fatalln(err)
-				}
-				tsc := template.
-					Must(template.New("claim").
-						Parse(string(stc)))
-
-				if err != nil {
-					log.Fatalln("executing template:", err)
-				}
-
-				pfs, err := os.Create(pwd + "/.dctl/helm/" + deploymentEntity.Name + "-" + strconv.Itoa(index) + "-pvc" + ".yml")
-				err = tsc.Execute(pfs, claimEntity)
+			stc, err := fs.ReadFile("claim.yaml")
+			if err != nil {
+				log.Fatalln(err)
 			}
+			tsc := template.
+				Must(template.New("claim").
+					Parse(string(stc)))
+
+			if err != nil {
+				log.Fatalln("executing template:", err)
+			}
+
+			pfs, err := os.Create(pwd + "/.dctl/helm/" + index + "-pvc" + ".yml")
+			err = tsc.Execute(pfs, deploymentEntity)
 		}
 	}
 
@@ -140,6 +140,7 @@ func getPortTwo(stringv string) string {
 	return strings.Split(stringv, ":")[1]
 }
 
+// Substitute some data from compose containers if deployments are empty
 func processDeployments(entity *dctl.DctlEntity) *dctl.DctlEntity {
 	for index, _ := range entity.Deployments {
 		for containerName, container := range entity.Deployments[index].Containers {
