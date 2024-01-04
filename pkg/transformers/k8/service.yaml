@@ -4,6 +4,7 @@ metadata:
   labels:
     app: {{ .ProjectName }}-{{ .Name }}
   name: {{.ProjectName}}-{{.Name}}
+  namespace: {{.ProjectName}}
 spec:
   ports:
     {{- range $containerName, $container := .Deployment.Containers}}{{ range $index, $value := .Ports }}

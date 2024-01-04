@@ -46,8 +46,9 @@ type Deployment struct {
 	Secret  bool   `yaml:"secret" default:"false"`
 	Restart string `yaml:"restart" default:"Always"`
 	Pvc     []struct {
-		Storage string `yaml:"storage"`
-		Name    string `yaml:"name"`
+		Storage  string `yaml:"storage"`
+		Name     string `yaml:"name"`
+		HostPath string `yaml:"hostPath"`
 	} `yaml:"pvc"`
 	EmptyDir struct {
 		SizeLimit string `yaml:"sizeLimit"`

@@ -142,7 +142,18 @@ func getPortTwo(stringv string) string {
 
 // Substitute some data from compose containers if deployments are empty
 func processDeployments(entity *dctl.DctlEntity) *dctl.DctlEntity {
-	for index, _ := range entity.Deployments {
+	for index, deployment := range entity.Deployments {
+		//Если не указан hostPath для pvc
+		if len(deployment.Pvc) > 0 {
+			for pvcI, pvc := range deployment.Pvc {
+				pvcE := pvc
+				if pvcE.HostPath == "" {
+					pvcE.HostPath = "/mnt/data/" + index
+				}
+				entity.Deployments[index].Pvc[pvcI] = pvcE
+			}
+		}
+
 		for containerName, container := range entity.Deployments[index].Containers {
 			containerP := container
 
