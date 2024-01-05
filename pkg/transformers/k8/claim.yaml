@@ -1,4 +1,4 @@
-{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{- range $index, $pvc := .Deployment.Pvc }}
+{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{$namespace := .Namespace -}}{{- range $index, $pvc := .Deployment.Pvc }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -14,7 +14,7 @@ spec:
     - ReadWriteOnce
   claimRef:
     name: {{$deploymentName}}-pvc-{{$pvc.Name}}
-    namespace: {{$projectName}}
+    namespace: {{or $namespace "default"}}
   hostPath:
     path: {{ $pvc.HostPath }}
 ---
@@ -24,7 +24,7 @@ metadata:
   labels:
     app: {{ $projectName }}-{{ $deploymentName }}
   name: {{$deploymentName}}-pvc-{{$pvc.Name}}
-  namespace: {{$projectName}}
+  namespace: {{or $namespace "default"}}
 spec:
   storageClassName: ""
   accessModes:

@@ -8,4 +8,5 @@ type K8DeploymentEntity struct {
 	Deployment  dctl.Deployment
 	Name        string
 	ProjectName string
+	Namespace   string
 }

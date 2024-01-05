@@ -229,6 +229,11 @@ if [ "$1" == "build-docker-prod" ];
     fi
 fi
 
+if [ "$1" == "up-kube" ];
+  then
+    kubectl apply -f ./.dctl/kube/
+fi
+
 {{range $index, $command := .Commands.Extra}}
 if [ "$1" == "{{$command.Name}}" ];
   then

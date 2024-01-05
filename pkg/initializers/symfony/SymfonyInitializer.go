@@ -22,6 +22,7 @@ func (Initializer) Init() {
 		"/containers/php/conf/php.ini",
 		"/containers/php/conf/www.conf",
 		"/containers/postgres/Dockerfile",
+		"/containers/php/entrypoint.sh",
 		"/dctl.yaml",
 	}
 	pwd, _ := os.Getwd()
@@ -35,7 +36,7 @@ func (Initializer) Init() {
 	}
 
 	currentVersion := version.Version
-	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/laravel"
+	baseUrl := "https://raw.githubusercontent.com/FutsalShuffle/dctl/" + currentVersion + "/templates/symfony"
 
 	os.MkdirAll(pwd+"/.dctl/containers/nginx/conf", os.ModePerm)
 	os.MkdirAll(pwd+"/.dctl/containers/php/conf", os.ModePerm)

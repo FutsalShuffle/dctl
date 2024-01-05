@@ -15,6 +15,7 @@ func (Initializer) Init() {
 	files := []string{
 		"/containers/node/Dockerfile",
 		"/dctl.yaml",
+		"/containers/node/entrypoint.sh",
 	}
 
 	currentVersion := version.Version

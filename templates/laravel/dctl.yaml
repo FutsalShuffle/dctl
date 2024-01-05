@@ -9,6 +9,22 @@ k8:
   enabled: true
 
 deployments:
+  db:
+    service: true
+    replicas: 1
+    pvc:
+      - name: db-data
+        storage: 512Mi
+    containers:
+      postgres:
+        env:
+          POSTGRES_DB: dev
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+          PGDATA: "/var/lib/postgresql/data/pgdata"
+        pvc:
+          - name: db-data
+            mountPath: '/var/lib/postgresql/data/pgdata'
   app:
     service: true
     replicas: 2
@@ -28,7 +44,8 @@ deployments:
           requests:
             cpu: 100m
             memory: 128Mi
-      postgres:
+        env:
+          DB_HOST: projectName-db
       nginx:
         ports:
           - 80

@@ -22,6 +22,7 @@ func (Initializer) Init() {
 		"/containers/php/conf/php.ini",
 		"/containers/php/conf/www.conf",
 		"/containers/postgres/Dockerfile",
+		"/containers/php/entrypoint.sh",
 		"/dctl.yaml",
 	}
 

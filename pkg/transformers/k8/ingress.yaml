@@ -1,11 +1,11 @@
-{{- $serviceName := .Name -}} {{- $projectName := .ProjectName -}}
+{{- $serviceName := .Name -}} {{- $projectName := .ProjectName -}}{{$namespace := .Namespace -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
     app: {{.ProjectName}}-{{$serviceName}}
   name: ingress-{{.ProjectName}}-{{.Name}}
-  namespace: {{.ProjectName}}
+  namespace: {{or $namespace "default"}}
 spec:
   rules:
     - http:

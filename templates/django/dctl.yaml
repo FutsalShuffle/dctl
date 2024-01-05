@@ -6,7 +6,56 @@ docker:
   registry: "" #Для CI/CD
 
 k8:
-  enabled: false
+  enabled: true
+
+deployments:
+  db:
+    service: true
+    replicas: 1
+    pvc:
+      - name: db-data
+        storage: 512Mi
+    containers:
+      postgres:
+        env:
+          POSTGRES_DB: dev
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+          PGDATA: "/var/lib/postgresql/data/pgdata"
+        pvc:
+          - name: db-data
+            mountPath: '/var/lib/postgresql/data/pgdata'
+  app:
+    service: true
+    replicas: 2
+    ingress:
+      enabled: true
+      paths:
+        - path: "/"
+          port: 80
+    containers:
+      django:
+        ports:
+          - 8000
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        env:
+          DB_HOST: example-db
+      nginx:
+        ports:
+          - 80
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
 
 containers:
   nginx:

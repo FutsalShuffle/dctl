@@ -91,7 +91,8 @@ type DctlEntity struct {
 	Version float32 `yaml:"version"`
 	Name    string  `yaml:"name"`
 	K8      struct {
-		Enabled bool `yaml:"enabled" default:"false"`
+		Enabled   bool   `yaml:"enabled" default:"false"`
+		Namespace string `yaml:"namespace" default:"default"`
 	}
 	Docker struct {
 		Enabled  bool   `yaml:"enabled" default:"true"`
