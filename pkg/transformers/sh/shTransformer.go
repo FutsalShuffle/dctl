@@ -23,7 +23,7 @@ func Transform(entity *dctl.DctlEntity) {
 	f, err := os.Create(pwd + "/dctl.sh")
 	t := template.Must(template.New("dctl").Parse(data))
 	err = t.Execute(f, entity)
-	err := os.Chmod(pwd+"/dctl.sh", 0700)
+	err = os.Chmod(pwd+"/dctl.sh", 0700)
 	if err != nil {
 		return
 	}

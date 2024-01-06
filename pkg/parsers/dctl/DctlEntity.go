@@ -43,7 +43,6 @@ type Deployment struct {
 		} `yaml:"paths"`
 		Enabled bool `yaml:"enabled" default:"false"`
 	} `yaml:"ingress"`
-	Secret  bool   `yaml:"secret" default:"false"`
 	Restart string `yaml:"restart" default:"Always"`
 	Pvc     []struct {
 		Storage  string `yaml:"storage"`

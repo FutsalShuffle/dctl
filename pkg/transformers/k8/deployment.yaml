@@ -23,9 +23,9 @@ spec:
         fsGroup: 1000
       {{- end}}
       containers:
-          {{- range $containerName, $container := .Deployment.Containers}}
+          {{- range $containerName, $container := .Deployment.Containers}} {{$hasImageTag := hasImageTag .Image}}
           - name: {{$projectName}}-{{$deploymentName}}-{{$containerName}}
-            image: {{.Image}}
+            image: {{.Image}}{{if not $hasImageTag}}:{{$environment}}-latest{{end}}
             ports:
             {{- if $container.Ports }}
             {{- range $port := $container.Ports }}

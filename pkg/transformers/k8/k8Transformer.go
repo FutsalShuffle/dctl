@@ -111,6 +111,7 @@ func Transform(entity *dctl.DctlEntity) {
 						"getPortOne":   getPortOne,
 						"getPortTwo":   getPortTwo,
 						"join":         join,
+						"hasImageTag":  hasImageTag,
 					}).
 					Parse(data))
 
@@ -230,14 +231,6 @@ func Transform(entity *dctl.DctlEntity) {
 
 // Substitute some data from compose containers if deployments are empty
 func processDeployments(entity *dctl.DctlEntity) *dctl.DctlEntity {
-	//Default environments are dev and prod
-	if len(entity.K8.Environments) == 0 {
-		envs := make([]string, 2)
-		envs[0] = "dev"
-		envs[1] = "prod"
-		entity.K8.Environments = envs
-	}
-
 	for index, deployment := range entity.Deployments {
 		//If no hostPath specified for pvc
 		if len(deployment.Pvc) > 0 {
@@ -253,13 +246,13 @@ func processDeployments(entity *dctl.DctlEntity) *dctl.DctlEntity {
 		for containerName, container := range entity.Deployments[index].Containers {
 			containerP := container
 
-			//If no Image specified for deployment then do {registry}/{deployment}/{container}:prod-latest
+			//If no Image specified for deployment then do {registry}/{deployment}/{container}
 			if container.Image == "" {
 				image := entity.Docker.Registry
 				if image != "" {
-					image = image + "/" + entity.Name + "/" + containerName + ":prod-latest"
+					image = image + "/" + entity.Name + "/" + containerName
 				} else {
-					image = entity.Name + "/" + containerName + ":prod-latest"
+					image = entity.Name + "/" + containerName
 				}
 				containerP.Image = image
 			}
@@ -323,4 +316,11 @@ func getPortTwo(stringv string) string {
 
 func join(sep string, s []string) string {
 	return strings.Join(s, sep)
+}
+
+func hasImageTag(str string) bool {
+	count := strings.Count(str, ":")
+	httpCount := strings.Count(str, "http")
+	//If image has http protocol, then it will be 2 :
+	return (httpCount == 1 && count == 2) || (httpCount == 0 && count == 1)
 }
