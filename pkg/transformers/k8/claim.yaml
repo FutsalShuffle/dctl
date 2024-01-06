@@ -1,9 +1,9 @@
-{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{$namespace := .Namespace -}}{{- range $index, $pvc := .Deployment.Pvc }}
+{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{$namespace := .Namespace -}}{{$environment := .Environment -}}{{- range $index, $pvc := .Deployment.Pvc }}
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{$deploymentName}}-pv-{{$pvc.Name}}
+  name: {{$deploymentName}}-pv-{{$pvc.Name}}-{{$environment}}
   labels:
     type: local
 spec:
@@ -13,8 +13,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   claimRef:
-    name: {{$deploymentName}}-pvc-{{$pvc.Name}}
-    namespace: {{or $namespace "default"}}
+    name: {{$deploymentName}}-pvc-{{$pvc.Name}}-{{$environment}}
+    namespace: {{or $namespace "default"}}-{{$environment}}
   hostPath:
     path: {{ $pvc.HostPath }}
 ---
@@ -22,9 +22,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    app: {{ $projectName }}-{{ $deploymentName }}
-  name: {{$deploymentName}}-pvc-{{$pvc.Name}}
-  namespace: {{or $namespace "default"}}
+    app: {{ $projectName }}-{{ $deploymentName }}-{{$environment}}
+  name: {{$deploymentName}}-pvc-{{$pvc.Name}}-{{$environment}}
+  namespace: {{or $namespace "default"}}-{{$environment}}
 spec:
   storageClassName: ""
   accessModes:
@@ -32,5 +32,5 @@ spec:
   resources:
     requests:
       storage: {{ or $pvc.Storage "1Gi" }}
-  volumeName: {{$deploymentName}}-pv-{{$pvc.Name}}
+  volumeName: {{$deploymentName}}-pv-{{$pvc.Name}}-{{$environment}}
 {{end}}

@@ -1,22 +1,22 @@
-{{ $deploymentName := .Name }}{{$deployment := .Deployment }}{{$projectName := .ProjectName -}}{{$namespace := .Namespace -}}
+{{ $deploymentName := .Name }}{{$deployment := .Deployment }}{{$secrets := .Secrets }}{{$projectName := .ProjectName -}}{{$namespace := .Namespace -}}{{$environment := .Environment -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: {{$projectName}}-{{.Name}}
-  name: {{$projectName}}-{{.Name}}
-  namespace: {{or $namespace "default"}}
+    app: {{$projectName}}-{{.Name}}-{{$environment}}
+  name: {{$projectName}}-{{.Name}}-{{$environment}}
+  namespace: {{or $namespace "default"}}-{{$environment}}
 spec:
   replicas: {{ or .Deployment.Replicas 1 }}
   selector:
     matchLabels:
-      app: {{$projectName}}-{{.Name}}
+      app: {{$projectName}}-{{.Name}}-{{$environment}}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: {{$projectName}}-{{.Name}}
+        app: {{$projectName}}-{{.Name}}-{{$environment}}
     spec:
       {{- if or .Deployment.EmptyDir.Enabled .Deployment.Pvc }}
       securityContext:
@@ -39,13 +39,18 @@ spec:
               {{- end }}
             {{if $container.Pvc}}{{ range $index, $value := $container.Pvc}}
               - mountPath: {{ $value.MountPath }}
-                name: {{$deploymentName}}-persistant-{{$value.Name}}{{end}}{{end}}
+                name: {{$deploymentName}}-persistant-{{$value.Name}}-{{$environment}}{{end}}{{end}}
             {{- if .Env }}
             env:
               {{- range $name, $value := .Env }}
               - name: {{$name}}
                 value: {{$value}}{{end -}}
               {{end}}
+            {{- if $secrets }}
+            envFrom:
+              - secretRef:
+                  name: {{$projectName}}-{{$deploymentName}}-secret-{{$environment}}
+            {{- end}}
             resources:
               {{- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu }}
               requests:
@@ -84,9 +89,9 @@ spec:
             sizeLimit: {{or .Deployment.EmptyDir.SizeLimit "512Mi" }}{{end}}
         {{ end }}
         {{- if $deployment.Pvc}}{{ range $index, $value := .Deployment.Pvc }}
-        - name: {{$deploymentName}}-persistant-{{$value.Name}}
+        - name: {{$deploymentName}}-persistant-{{$value.Name}}-{{$environment}}
           persistentVolumeClaim:
-            claimName: {{$deploymentName}}-pvc-{{$value.Name}}
+            claimName: {{$deploymentName}}-pvc-{{$value.Name}}-{{$environment}}
             {{end}}{{end}}
       initContainers:
       {{- if .Deployment.Pvc }}
@@ -101,7 +106,7 @@ spec:
               /bin/chmod 775 {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }} {{ $pvc.MountPath }} {{- end }}{{- end }}
           volumeMounts:
          {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }}
-          - name: {{$deploymentName}}-persistant-{{$pvc.Name}}
+          - name: {{$deploymentName}}-persistant-{{$pvc.Name}}-{{$environment}}
             mountPath: {{ $pvc.MountPath }}
           {{ end }}{{- end }}
         {{- end }}

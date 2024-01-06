@@ -2,9 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: {{ .ProjectName }}-{{ .Name }}
-  name: {{.ProjectName}}-{{.Name}}
-  namespace: {{or .Namespace "default"}}
+    app: {{ .ProjectName }}-{{ .Name }}-{{.Environment}}
+  name: {{.ProjectName}}-{{.Name}}-{{.Environment}}
+  namespace: {{or .Namespace "default"}}-{{.Environment}}
 spec:
   ports:
     {{- range $containerName, $container := .Deployment.Containers}}{{ range $index, $value := .Ports }}
@@ -13,5 +13,5 @@ spec:
       targetPort: {{getPortTwo $value}}
     {{end}}{{- end}}
   selector:
-    app: {{ .ProjectName }}-{{ .Name }}
+    app: {{ .ProjectName }}-{{ .Name }}-{{.Environment}}
   type: ClusterIP
