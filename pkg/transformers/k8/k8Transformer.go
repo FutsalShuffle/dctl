@@ -9,9 +9,6 @@ import (
 	yaml "gopkg.in/yaml.v3"
 	"log"
 	"os"
-	"strconv"
-	"strings"
-	"text/template"
 )
 
 //go:embed claim.yaml
@@ -21,6 +18,7 @@ import (
 //go:embed namespace.yaml
 //go:embed secretValues.yaml
 //go:embed secret.yaml
+//go:embed sealedSecret.yaml
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
@@ -49,24 +47,7 @@ func Transform(entity *dctl.DctlEntity) {
 
 		//Create templated secret files if no existing found
 		if _, err := os.Stat(pwd + "/.dctl/kube/secrets/" + environment + ".yaml"); errors.Is(err, os.ErrNotExist) {
-			secretT, err := fs.ReadFile("secretValues.yaml")
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			t := template.
-				Must(template.New("secretValueT").
-					Parse(string(secretT)))
-
-			if err != nil {
-				log.Fatalln("executing template:", err)
-			}
-
-			pf, err := os.Create(pwd + "/.dctl/kube/secrets/" + environment + ".yaml")
-			if err != nil {
-				log.Fatalln(err)
-			}
-			_ = t.Execute(pf, entityNew)
+			CreateSecretTemplate(entityNew, environment, fs)
 		}
 
 		var secretEntity SecretsEntity
@@ -80,9 +61,9 @@ func Transform(entity *dctl.DctlEntity) {
 		secrets[environment] = secretEntity
 	}
 
-	//For ordering
-	counter := 1
 	for _, environment := range entityNew.K8.Environments {
+		//For ordering
+		counter := 1
 		for index, deployment := range entityNew.Deployments {
 			//Deepcopy of deployments
 			dp, _ := deepcopy.Anything(entityNew.Deployments[index])
@@ -97,133 +78,33 @@ func Transform(entity *dctl.DctlEntity) {
 
 			pDeploymentEntity := processDeploymentEnvs(deploymentEntity, secrets[environment])
 
-			//Deployment
-			b, err := fs.ReadFile("deployment.yaml")
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			data := string(b)
-			t := template.
-				Must(template.New("deployment").
-					Funcs(template.FuncMap{
-						"getMountPath": getMountPath,
-						"getPortOne":   getPortOne,
-						"getPortTwo":   getPortTwo,
-						"join":         join,
-						"hasImageTag":  hasImageTag,
-					}).
-					Parse(data))
-
-			if err != nil {
-				log.Fatalln("executing template:", err)
-			}
-
-			pf, _ := os.Create(pwd + "/.dctl/kube/environments/" + environment + "/" + strconv.Itoa(counter+1) + "_" + index + "-deployment" + ".yml")
-			err = t.Execute(pf, pDeploymentEntity)
+			CreateDeployment(pDeploymentEntity, counter, fs)
 
 			//Service
 			if deployment.Service == true {
-				sf, err := fs.ReadFile("service.yaml")
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				sttemplate := template.
-					Must(template.New("service").
-						Funcs(template.FuncMap{
-							"getPortOne": getPortOne,
-							"getPortTwo": getPortTwo,
-						}).
-						Parse(string(sf)))
-
-				if err != nil {
-					log.Fatalln("executing template:", err)
-				}
-
-				pfs, _ := os.Create(pwd + "/.dctl/kube/environments/" + environment + "/" + strconv.Itoa(counter+2) + "_" + index + "-service" + ".yml")
-				err = sttemplate.Execute(pfs, pDeploymentEntity)
+				CreateService(pDeploymentEntity, counter, fs)
 			}
 
 			//Ingress
 			if deployment.Ingress.Enabled == true {
-				inft, err := fs.ReadFile("ingress.yaml")
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				inftemplate := template.
-					Must(template.New("ingress").
-						Parse(string(inft)))
-
-				if err != nil {
-					log.Fatalln("executing template:", err)
-				}
-
-				inf, _ := os.Create(pwd + "/.dctl/kube/environments/" + environment + "/" + strconv.Itoa(counter+3) + "_" + index + "-ingress" + ".yml")
-				err = inftemplate.Execute(inf, pDeploymentEntity)
+				CreateIngress(pDeploymentEntity, counter, fs)
 			}
 
 			//Pvc storage
 			if len(deployment.Pvc) > 0 {
-				stc, err := fs.ReadFile("claim.yaml")
-				if err != nil {
-					log.Fatalln(err)
-				}
-				tsc := template.
-					Must(template.New("claim").
-						Parse(string(stc)))
-
-				if err != nil {
-					log.Fatalln("executing template:", err)
-				}
-
-				pfs, _ := os.Create(pwd + "/.dctl/kube/environments/" + environment + "/" + strconv.Itoa(counter) + "_" + index + "-pvc" + ".yml")
-				err = tsc.Execute(pfs, pDeploymentEntity)
+				CreatePvc(pDeploymentEntity, counter, fs)
 			}
 
 			//Create namespace
-			nd, err := fs.ReadFile("namespace.yaml")
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			t = template.
-				Must(template.New("namespace").
-					Parse(string(nd)))
-
-			if err != nil {
-				log.Fatalln("executing template:", err)
-			}
-			namespaceEntity := &NamespaceEntity{
-				Namespace:   pDeploymentEntity.Namespace,
-				Environment: environment,
-			}
-
-			pf, _ = os.Create(pwd + "/.dctl/kube/environments/" + environment + "/00" + "-namespace" + ".yml")
-			err = t.Execute(pf, namespaceEntity)
+			CreateNamespace(pDeploymentEntity, counter, fs)
 
 			//Secrets
 			if len(pDeploymentEntity.Secrets) > 0 {
-				sd, err := fs.ReadFile("secret.yaml")
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				t = template.
-					Must(template.New("secrets").
-						Parse(string(sd)))
-
-				if err != nil {
-					log.Fatalln("executing template:", err)
-				}
-
-				st, _ := os.Create(pwd + "/.dctl/kube/environments/" + environment + "/00" + "-secrets" + ".yml")
-				_ = t.Execute(st, pDeploymentEntity)
+				CreateSecrets(pDeploymentEntity, counter, fs, entityNew.K8.UseSealedSecrets)
 			}
+			//Ordering so that apply -f applies all deployments in correct order (pvc, deployment, service, ingress)
+			counter = counter + 10
 		}
-		//Ordering so that apply -f applies all deployments in correct order (pvc, deployment, service, ingress)
-		counter = counter + 10
 	}
 
 	fmt.Println("Generated kubernetes files")
@@ -301,26 +182,4 @@ func processDeploymentEnvs(dp DeploymentEntity, secretEntity SecretsEntity) Depl
 	}
 
 	return dp
-}
-
-func getMountPath(stringv string) string {
-	return strings.Split(stringv, ":")[1]
-}
-
-func getPortOne(stringv string) string {
-	return strings.Split(stringv, ":")[0]
-}
-func getPortTwo(stringv string) string {
-	return strings.Split(stringv, ":")[1]
-}
-
-func join(sep string, s []string) string {
-	return strings.Join(s, sep)
-}
-
-func hasImageTag(str string) bool {
-	count := strings.Count(str, ":")
-	httpCount := strings.Count(str, "http")
-	//If image has http protocol, then it will be 2 :
-	return (httpCount == 1 && count == 2) || (httpCount == 0 && count == 1)
 }
