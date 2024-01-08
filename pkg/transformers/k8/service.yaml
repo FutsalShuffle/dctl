@@ -1,19 +1,17 @@
-{{$deploymentName := .Name -}}
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    io.kompose.service: {{.Name}}
-  name: {{.Name}}
+    app: {{ .ProjectName }}-{{ .Name }}-{{.Environment}}
+  name: {{.ProjectName}}-{{.Name}}-{{.Environment}}
+  namespace: {{or .Namespace "default"}}-{{.Environment}}
 spec:
   ports:
-    {{ $index, $value := range .Ports }}
-    - name: {{getPortTwo $value}}
+    {{- range $containerName, $container := .Deployment.Containers}}{{ range $index, $value := .Ports }}
+    - name: "{{getPortTwo $value}}"
       port: {{getPortOne $value}}
       targetPort: {{getPortTwo $value}}
-    {{end}}
-
+    {{end}}{{- end}}
   selector:
-    io.kompose.service: {{.Name}}
-status:
-  loadBalancer: {}
+    app: {{ .ProjectName }}-{{ .Name }}-{{.Environment}}
+  type: ClusterIP

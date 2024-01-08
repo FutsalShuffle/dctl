@@ -12,7 +12,7 @@ import (
 	"runtime"
 )
 
-const Version = "v0.91"
+const Version = "v1.0"
 
 type ReleasesStruct struct {
 	TagName string `json:"tag_name"`

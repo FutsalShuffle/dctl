@@ -1,45 +1,126 @@
-{{$deploymentName := .Name -}} {{$dockerRegistry := .Docker.Registry -}}
-{{$projectName := .ProjectName -}}
+{{ $deploymentName := .Name }}{{$deployment := .Deployment }}{{$secrets := .Secrets }}{{$projectName := .ProjectName -}}{{$namespace := .Namespace -}}{{$environment := .Environment -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    io.kompose.service: {{.Name}}
-  name: {{.Name}}
+    app: {{$projectName}}-{{.Name}}-{{$environment}}
+  name: {{$projectName}}-{{.Name}}-{{$environment}}
+  namespace: {{or $namespace "default"}}-{{$environment}}
 spec:
-  replicas: 1
+  replicas: {{ or .Deployment.Replicas 1 }}
   selector:
     matchLabels:
-      io.kompose.service: {{.Name}}
+      app: {{$projectName}}-{{.Name}}-{{$environment}}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        io.kompose.service: {{.Name}}
+        app: {{$projectName}}-{{.Name}}-{{$environment}}
     spec:
+      {{- if or .Deployment.EmptyDir.Enabled .Deployment.Pvc }}
+      securityContext:
+        fsGroup: 1000
+      {{- end}}
       containers:
-        {{- if .Environment }}
-        - env:
-            {{ range $name, $value := .Environment}}
-            - name: {{$name}}
-              value: {{$value}}{{end}}
-        {{end}}
-          image: {{if $dockerRegistry}}{{$dockerRegistry}}/{{end}}{{$projectName}}/{{$deploymentName}}:prod-latest
-          name: {{$projectName}}-{{$deploymentName}}
-          {{- if .Ports }}
-          ports:
-            - containerPort: {{getInnerPort .Ports}}{{end}}
-          resources: {}
-          volumeMounts:
-          {{ range $index, $value := .Volumes}}
-            - mountPath: {{getMountPath $value}}
-              name: {{$deploymentName}}-claim{{$index}}{{end}}
-      restartPolicy: Always
+          {{- range $containerName, $container := .Deployment.Containers}} {{$hasImageTag := hasImageTag .Image}}
+          - name: {{$projectName}}-{{$deploymentName}}-{{$containerName}}
+            image: {{.Image}}{{if not $hasImageTag}}:{{$environment}}-latest{{end}}
+            ports:
+            {{- if $container.Ports }}
+            {{- range $port := $container.Ports }}
+              - containerPort: {{ getPortTwo $port }}
+            {{ end }}{{- end }}
+            imagePullPolicy: Always
+            volumeMounts:
+              {{- if .EmptyDir.Enabled }}
+              - mountPath: {{ .EmptyDir.MountPath }}
+                name: emptydir-volume
+              {{- end }}
+            {{if $container.Pvc}}{{ range $index, $value := $container.Pvc}}
+              - mountPath: {{ $value.MountPath }}
+                name: {{$deploymentName}}-persistant-{{$value.Name}}-{{$environment}}{{end}}{{end}}
+            {{- if .Env }}
+            env:
+              {{- range $name, $value := .Env }}
+              - name: {{$name}}
+                value: {{$value}}{{end -}}
+              {{end}}
+            {{- if $secrets }}
+            envFrom:
+              - secretRef:
+                  name: {{$projectName}}-{{$deploymentName}}-secret-{{$environment}}
+            {{- end}}
+            resources:
+              {{- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu }}
+              requests:
+                memory: {{ .Resources.Requests.Memory }}
+                cpu: {{ .Resources.Requests.Cpu }}
+              {{- end}}
+              {{- if or .Resources.Limits.Memory $container.Resources.Limits.Cpu }}
+              limits:
+                memory: {{ .Resources.Limits.Memory }}
+                cpu: {{ .Resources.Limits.Cpu }}
+              {{- end}}
+            lifecycle:
+              {{if or .Lifecycle.PostStart.Exec.Command .Lifecycle.PostStart.HttpGet.Host}}postStart:
+                {{ if .Lifecycle.PostStart.Exec.Command -}}
+                exec:
+                  command: [ "{{ join `", "` .Lifecycle.PostStart.Exec.Command }}" ]
+                {{end -}}
+              {{end -}}
+              {{if or .Lifecycle.PreStop.Exec.Command .Lifecycle.PreStop.HttpGet.Host}}preStop:
+                {{ if .Lifecycle.PreStop.Exec.Command -}}
+                exec:
+                  command: [ "{{ join `", "` .Lifecycle.PreStop.Exec.Command }}" ]
+                {{end -}}
+              {{end -}}
+        {{- end}}
+      restartPolicy: {{ or .Deployment.Restart "Always" }}
+      hostAliases:
+        - ip: 127.0.0.1
+          hostnames:
+            {{range $containerName, $container := .Deployment.Containers}}- {{$containerName}}
+            {{end}}
       volumes:
-        {{ range $index, $value := .Volumes }}
-        - name: {{$deploymentName}}-claim{{$index}}
+        {{- if .Deployment.EmptyDir.Enabled }}
+        - name: emptydir-volume
+          emptyDir: {{if .Deployment.EmptyDir.SizeLimit}}
+            sizeLimit: {{or .Deployment.EmptyDir.SizeLimit "512Mi" }}{{end}}
+        {{ end }}
+        {{- if $deployment.Pvc}}{{ range $index, $value := .Deployment.Pvc }}
+        - name: {{$deploymentName}}-persistant-{{$value.Name}}-{{$environment}}
           persistentVolumeClaim:
-            claimName: {{$deploymentName}}-claim{{$index}}
-        {{end}}
-status: {}
+            claimName: {{$deploymentName}}-pvc-{{$value.Name}}-{{$environment}}
+            {{end}}{{end}}
+      initContainers:
+      {{- if .Deployment.Pvc }}
+        - name: volume-pvc-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown 0:1000 {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }} {{ $pvc.MountPath }} {{- end }}{{- end }} &&
+              /bin/chmod 775 {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }} {{ $pvc.MountPath }} {{- end }}{{- end }}
+          volumeMounts:
+         {{- range $key, $container := .Deployment.Containers }}{{- range $keyPvc, $pvc := $container.Pvc }}
+          - name: {{$deploymentName}}-persistant-{{$pvc.Name}}-{{$environment}}
+            mountPath: {{ $pvc.MountPath }}
+          {{ end }}{{- end }}
+        {{- end }}
+        {{- if .Deployment.EmptyDir.Enabled }}
+        - name: emptydir-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown -R 0:1000 /emptyDir &&
+              /bin/chmod -R 1775 /emptyDir
+          volumeMounts:
+            - name: emptydir-volume
+              mountPath: "/emptyDir"
+        {{- end }}

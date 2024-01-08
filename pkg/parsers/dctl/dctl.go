@@ -1,7 +1,7 @@
 package dctl
 
 import (
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 	"log"
 	"os"
 )
@@ -19,6 +19,14 @@ func ParseDctl() DctlEntity {
 
 	if err != nil {
 		log.Fatalf("error: %v", err)
+	}
+
+	//Default environments are dev and prod
+	if len(entity.K8.Environments) == 0 {
+		envs := make([]string, 2)
+		envs[0] = "dev"
+		envs[1] = "prod"
+		entity.K8.Environments = envs
 	}
 
 	return entity

@@ -193,25 +193,26 @@ if [ "$1" == "push-docker" ];
           ./dctl.sh push-docker {{$index}}{{end}}
     fi
 fi
-
-if [ "$1" == "push-docker-prod" ];
+{{$containers := .Containers}}
+{{range $index, $environment := .K8.Environments}}
+if [ "$1" == "push-docker-{{$environment}}" ];
   then
-    {{range $index, $container := .Containers}}
+    {{range $index, $container := $containers}}
     if [ "$2" == "{{$index}}" ];
         then
-          docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
+          docker push {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:{{$environment}}-latest
     fi
     {{end}}
     if [ "$2" == "" ];
         then
-          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
-          ./dctl.sh push-docker {{$index}}{{end}}
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := $containers}}
+          ./dctl.sh push-docker-{{$environment}} {{$index}}{{end}}
     fi
 fi
 
-if [ "$1" == "build-docker-prod" ];
+if [ "$1" == "build-docker-{{$environment}}" ];
   then
-    {{range $index, $container := .Containers}}
+    {{range $index, $container := $containers}}
     if [ "$2" == "{{$index}}" ];
         then
             docker build {{$container.Build.Context}} \
@@ -219,15 +220,16 @@ if [ "$1" == "build-docker-prod" ];
             {{range $argName, $argVal := $container.Build.Args}}--build-arg {{$argName}}={{$argVal}} \
             {{end}}--build-arg USER_ID=$USER_ID \
             --build-arg GROUP_ID=$GROUP_ID \
-            -t {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest;
+            -t {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:{{$environment}}-latest;
     fi
     {{end}}
     if [ "$2" == "" ];
         then
-          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := .Containers}}
-          ./dctl.sh build-docker-prod {{$index}}{{end}}
+          cd "$(dirname "${BASH_SOURCE[0]}")"{{range $index, $c := $containers}}
+          ./dctl.sh build-docker-{{$environment}} {{$index}}{{end}}
     fi
 fi
+{{- end -}}
 
 {{range $index, $command := .Commands.Extra}}
 if [ "$1" == "{{$command.Name}}" ];

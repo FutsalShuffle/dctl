@@ -1,13 +1,36 @@
+{{$deploymentName := .Name}}{{$projectName := .ProjectName}}{{$namespace := .Namespace -}}{{$environment := .Environment -}}{{- range $index, $pvc := .Deployment.Pvc }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{$deploymentName}}-pv-{{$pvc.Name}}-{{$environment}}
+  labels:
+    type: local
+spec:
+  storageClassName: ""
+  capacity:
+    storage: {{ or $pvc.Storage "1Gi" }}
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    name: {{$deploymentName}}-pvc-{{$pvc.Name}}-{{$environment}}
+    namespace: {{or $namespace "default"}}-{{$environment}}
+  hostPath:
+    path: {{ $pvc.HostPath }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    io.kompose.service: {{.Name}}-claim{{.Index}}
-  name: {{.Name}}-claim{{.Index}}
+    app: {{ $projectName }}-{{ $deploymentName }}-{{$environment}}
+  name: {{$deploymentName}}-pvc-{{$pvc.Name}}-{{$environment}}
+  namespace: {{or $namespace "default"}}-{{$environment}}
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 100Mi
-status: {}
+      storage: {{ or $pvc.Storage "1Gi" }}
+  volumeName: {{$deploymentName}}-pv-{{$pvc.Name}}-{{$environment}}
+{{end}}

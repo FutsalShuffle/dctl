@@ -11,8 +11,11 @@ ENV USER_ID=${USER_ID}
 ARG GROUP_ID='1000'
 ARG GROUP_ID=${GROUP_ID}
 ENV GROUP_ID=${GROUP_ID}
+ADD . /var/www/html
 
 RUN npm install -g pm2 gulp
+COPY .dctl/containers/node/entrypoint.sh /entrypoint.sh
+CMD ["/entrypoint.sh"]
 
 WORKDIR /var/www/html
 EXPOSE 9000

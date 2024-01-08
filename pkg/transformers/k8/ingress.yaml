@@ -1,0 +1,21 @@
+{{- $serviceName := .Name -}} {{- $projectName := .ProjectName -}}{{$namespace := .Namespace -}}{{$environment := .Environment -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: {{.ProjectName}}-{{$serviceName}}-{{$environment}}
+  name: ingress-{{.ProjectName}}-{{.Name}}-{{$environment}}
+  namespace: {{or $namespace "default"}}-{{$environment}}
+spec:
+  rules:
+    - http:
+        paths:
+          {{- range $path := .Deployment.Ingress.Paths }}
+          - path: {{$path.Path}}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{$projectName}}-{{ $serviceName }}-{{$environment}}
+                port:
+                  number: {{$path.Port}}
+{{end -}}
