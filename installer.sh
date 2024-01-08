@@ -27,7 +27,7 @@ fi
 #newUrl=""
 #newUrl=$(curl -s https://api.github.com/repos/FutsalShuffle/dctl/releases/latest | grep -o -E 'browser_download_url\": \"(.+)\/dctl_amd64_linux')
 #echo $newUrl
-url=https://github.com/FutsalShuffle/dctl/releases/download/v0.6/dctl_"$architecture"_"$ostype"
+url=https://github.com/FutsalShuffle/dctl/releases/download/v1.0/dctl_"$architecture"_"$ostype"
 
 echo "$url"
 
