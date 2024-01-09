@@ -1,0 +1,124 @@
+[[$deployments := .Deployments ]][[$projectName := .Name -]][[$namespace := .K8.Namespace -]]
+[[range $deploymentName, $deployment := .Deployments]]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: [[$projectName]]-[[$deploymentName]]
+  name: [[$projectName]]-[[$deploymentName]]
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: [[ or $deployment.Replicas 1 ]]
+  selector:
+    matchLabels:
+      app: [[$projectName]]-[[$deploymentName]]
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: [[$projectName]]-[[$deploymentName]]
+    spec:
+      [[- if or $deployment.EmptyDir.Enabled $deployment.Pvc ]]
+      securityContext:
+        fsGroup: 1000
+      [[- end]]
+      containers:
+          [[- range $containerName, $container := $deployment.Containers]] [[$hasImageTag := hasImageTag .Image]]
+          - name: [[$projectName]]-[[$deploymentName]]-[[$containerName]]
+            image: [[.Image]][[if not $hasImageTag]]:{{.Values.images.tags.[[$deploymentName]].[[$containerName]]}}[[end]]
+            ports:
+            [[- if $container.Ports ]]
+            [[- range $port := $container.Ports ]]
+              - containerPort: [[ getPortTwo $port ]]
+            [[ end ]][[- end ]]
+            imagePullPolicy: Always
+            volumeMounts:
+              [[- if .EmptyDir.Enabled ]]
+              - mountPath: [[ .EmptyDir.MountPath ]]
+                name: emptydir-volume
+              [[- end ]]
+            [[if $container.Pvc]][[ range $index, $value := $container.Pvc]]
+              - mountPath: [[ $value.MountPath ]]
+                name: [[$deploymentName]]-persistant-[[$value.Name]][[end]][[end]]
+            [[- if .Env ]]
+            env:
+              [[- range $name, $value := .Env ]]
+              - name: [[$name]]
+                value: [[$value]][[end -]]
+              [[end]]
+            resources:
+              [[- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu ]]
+              requests:
+                memory: [[ .Resources.Requests.Memory ]]
+                cpu: [[ .Resources.Requests.Cpu ]]
+              [[- end]]
+              [[- if or .Resources.Limits.Memory $container.Resources.Limits.Cpu ]]
+              limits:
+                memory: [[ .Resources.Limits.Memory ]]
+                cpu: [[ .Resources.Limits.Cpu ]]
+              [[- end]]
+            lifecycle:
+              [[if or .Lifecycle.PostStart.Exec.Command .Lifecycle.PostStart.HttpGet.Host]]postStart:
+                [[ if .Lifecycle.PostStart.Exec.Command -]]
+                exec:
+                  command: [ "[[ join `", "` .Lifecycle.PostStart.Exec.Command ]]" ]
+                [[end -]]
+              [[end -]]
+              [[if or .Lifecycle.PreStop.Exec.Command .Lifecycle.PreStop.HttpGet.Host]]preStop:
+                [[ if .Lifecycle.PreStop.Exec.Command -]]
+                exec:
+                  command: [ "[[ join `", "` .Lifecycle.PreStop.Exec.Command ]]" ]
+                [[end -]]
+              [[end -]]
+        [[- end]]
+      restartPolicy: [[ or $deployment.Restart "Always" ]]
+      hostAliases:
+        - ip: 127.0.0.1
+          hostnames:
+            [[range $containerName, $container := $deployment.Containers]]- [[$containerName]]
+            [[end]]
+      volumes:
+        [[- if $deployment.EmptyDir.Enabled ]]
+        - name: emptydir-volume
+          emptyDir: [[if $deployment.EmptyDir.SizeLimit]]
+            sizeLimit: [[or $deployment.EmptyDir.SizeLimit "512Mi" ]][[end]]
+        [[ end ]]
+        [[- if $deployment.Pvc]][[ range $index, $value := $deployment.Pvc ]]
+        - name: [[$deploymentName]]-persistant-[[$value.Name]]
+          persistentVolumeClaim:
+            claimName: [[$deploymentName]]-pvc-[[$value.Name]]
+            [[end]][[end]]
+      initContainers:
+      [[- if $deployment.Pvc ]]
+        - name: volume-pvc-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown 0:1000 [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]] [[ $pvc.MountPath ]] [[- end ]][[- end ]] &&
+              /bin/chmod 775 [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]] [[ $pvc.MountPath ]] [[- end ]][[- end ]]
+          volumeMounts:
+         [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]]
+          - name: [[$deploymentName]]-persistant-[[$pvc.Name]]
+            mountPath: [[ $pvc.MountPath ]]
+          [[ end ]][[- end ]]
+        [[- end ]]
+        [[- if $deployment.EmptyDir.Enabled ]]
+        - name: emptydir-permission-set
+          image: busybox:1.31.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - /bin/chown -R 0:1000 /emptyDir &&
+              /bin/chmod -R 1775 /emptyDir
+          volumeMounts:
+            - name: emptydir-volume
+              mountPath: "/emptyDir"
+        [[- end ]]
+[[end]]

@@ -1,0 +1,37 @@
+[[$projectName := .Name]][[range $deploymentName, $deployment := .Deployments]][[if $deployment.Pvc]]
+---
+[[- range $index, $pvc := $deployment.Pvc ]]
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: [[$deploymentName]]-pv-[[$pvc.Name]]
+  labels:
+    type: local
+spec:
+  storageClassName: ""
+  capacity:
+    storage: [[ or $pvc.Storage "1Gi" ]]
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    name: [[$deploymentName]]-pvc-[[$pvc.Name]]
+    namespace: {{ .Values.namespace }}
+  hostPath:
+    path: [[ $pvc.HostPath ]]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: [[ $projectName ]]-[[ $deploymentName ]]
+  name: [[$deploymentName]]-pvc-[[$pvc.Name]]
+  namespace: {{ .Values.namespace }}
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: [[ or $pvc.Storage "1Gi" ]]
+  volumeName: [[$deploymentName]]-pv-[[$pvc.Name]]
+[[end]][[end]][[end]]

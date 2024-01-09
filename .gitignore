@@ -5,3 +5,7 @@ up.sh
 down.sh
 docker-compose.yml
 docker-compose.prod.yml
+dctl_amd64_linux
+dctl_amd64_darwin
+dctl_amd64_win
+dctl_arm64_darwin

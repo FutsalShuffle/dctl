@@ -1,0 +1,8 @@
+apiVersion: v1
+appVersion: 1.0
+description: {{.ProjectName}}
+name: {{.ProjectName}}
+# Overwrites by CI
+version: 1.0
+
+

@@ -1,0 +1,10 @@
+---
+namespace: [[or .K8.Namespace .Name]]
+images:
+  tags:
+  [[range $deploymentName, $deployment := .Deployments]]
+    [[$deploymentName]]:
+    [[range $containerName, $container := .$deployment.Containers]]
+      [[$containerName]]: latest
+    [[end]]
+  [[end]]

@@ -1,0 +1,21 @@
+[[- $projectName := .Name -]]
+[[range $deploymentName, $deployment := .Deployments]][[if $deployment.Service]]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: [[ $projectName ]]-[[ $deploymentName ]]
+  name: [[ $projectName ]]-[[$deploymentName]]
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+    [[- range $containerName, $container := $deployment.Containers]][[ range $index, $value := .Ports ]]
+    - name: "[[getPortTwo $value]]"
+      port: [[getPortOne $value]]
+      targetPort: [[getPortTwo $value]]
+    [[end]][[- end]]
+  selector:
+    app: [[ $projectName ]]-[[ $deploymentName ]]
+  type: ClusterIP
+[[end]][[end]]

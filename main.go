@@ -5,7 +5,7 @@ import (
 	"dctl/pkg/parsers/dctl"
 	"dctl/pkg/transformers/compose"
 	"dctl/pkg/transformers/gitlab"
-	"dctl/pkg/transformers/k8"
+	"dctl/pkg/transformers/helm"
 	"dctl/pkg/transformers/sh"
 	"dctl/pkg/version"
 	"flag"
@@ -38,5 +38,5 @@ func main() {
 	compose.Transform(&entity)
 	gitlab.Transform(&entity)
 	sh.Transform(&entity)
-	k8.Transform(&entity)
+	helm.Transform(&entity)
 }
