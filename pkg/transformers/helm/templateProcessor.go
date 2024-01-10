@@ -123,30 +123,30 @@ func CreateNamespace(deployment *dctl.DctlEntity, fs embed.FS) {
 	err = t.Execute(pf, deployment)
 }
 
-//
-//func CreateSecrets(deployment DeploymentEntity, fs embed.FS, useSealed bool) {
-//	pwd, _ := os.Getwd()
-//	secretT := "secret.yaml"
-//	if useSealed {
-//		secretT = "sealedSecret.yaml"
-//	}
-//	sd, err := fs.ReadFile(secretT)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	t := template.
-//		Must(template.New("secrets").
-//			Delims("[[", "]]").
-//			Parse(string(sd)))
-//
-//	if err != nil {
-//		log.Fatalln("executing template:", err)
-//	}
-//
-//	st, _ := os.Create(pwd + "/.dctl/helm/templates/" + "Secrets" + ".yaml")
-//	_ = t.Execute(st, deployment)
-//}
+func CreateSecrets(deployment *dctl.DctlEntity, fs embed.FS) {
+	pwd, _ := os.Getwd()
+	secretT := "secret.yaml"
+	if deployment.K8.UseSealedSecrets {
+		secretT = "sealedSecret.yaml"
+	}
+
+	sd, err := fs.ReadFile(secretT)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	t := template.
+		Must(template.New("secrets").
+			Delims("[[", "]]").
+			Parse(string(sd)))
+
+	if err != nil {
+		log.Fatalln("executing template:", err)
+	}
+
+	st, _ := os.Create(pwd + "/.dctl/helm/templates/" + "Secrets" + ".yaml")
+	_ = t.Execute(st, deployment)
+}
 
 func CreateChart(deployment *dctl.DctlEntity, fs embed.FS) {
 	pwd, _ := os.Getwd()
@@ -166,6 +166,26 @@ func CreateChart(deployment *dctl.DctlEntity, fs embed.FS) {
 
 	st, _ := os.Create(pwd + "/.dctl/helm/" + "Chart" + ".yaml")
 	_ = t.Execute(st, deployment)
+}
+
+func CreateValues(env EnvEntity, fs embed.FS) {
+	pwd, _ := os.Getwd()
+	sd, err := fs.ReadFile("values.yaml")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	t := template.
+		Must(template.New("values").
+			Delims("[[", "]]").
+			Parse(string(sd)))
+
+	if err != nil {
+		log.Fatalln("executing template:", err)
+	}
+
+	st, _ := os.Create(pwd + "/.dctl/helm/" + "values-" + env.Environment + ".yaml")
+	_ = t.Execute(st, env)
 }
 
 func getMountPath(stringv string) string {

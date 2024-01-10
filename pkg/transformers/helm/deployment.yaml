@@ -27,7 +27,7 @@ spec:
       containers:
           [[- range $containerName, $container := $deployment.Containers]] [[$hasImageTag := hasImageTag .Image]]
           - name: [[$projectName]]-[[$deploymentName]]-[[$containerName]]
-            image: [[.Image]][[if not $hasImageTag]]:{{.Values.images.tags.[[$deploymentName]].[[$containerName]]}}[[end]]
+            image: [[.Image]][[if not $hasImageTag]]:{{.Values.images.tag}}[[end]]
             ports:
             [[- if $container.Ports ]]
             [[- range $port := $container.Ports ]]
@@ -42,12 +42,16 @@ spec:
             [[if $container.Pvc]][[ range $index, $value := $container.Pvc]]
               - mountPath: [[ $value.MountPath ]]
                 name: [[$deploymentName]]-persistant-[[$value.Name]][[end]][[end]]
-            [[- if .Env ]]
+            {{- $envs := index .Values.env "[[$deploymentName]]" "[[$containerName]]" -}}
+            {{- with $envs }}
             env:
-              [[- range $name, $value := .Env ]]
-              - name: [[$name]]
-                value: [[$value]][[end -]]
-              [[end]]
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- if .Values.secrets.[[$deploymentName]] }}
+            envFrom:
+              - secretRef:
+                  name: [[$projectName]]-[[$deploymentName]]-secret
+            {{- end }}
             resources:
               [[- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu ]]
               requests:

@@ -16,6 +16,7 @@ import (
 //go:embed secret.yaml
 //go:embed sealedSecret.yaml
 //go:embed chart.yaml
+//go:embed values.yaml
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
@@ -24,10 +25,15 @@ func Transform(entity *dctl.DctlEntity) {
 	}
 	pwd, _ := os.Getwd()
 	err := os.RemoveAll(pwd + "/.dctl/helm/templates")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	err = os.MkdirAll(pwd+"/.dctl/helm/templates/", os.ModePerm)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	entityNew := processDeployments(entity)
 	CreateDeployment(entityNew, fs)
 	CreateChart(entityNew, fs)
@@ -35,11 +41,15 @@ func Transform(entity *dctl.DctlEntity) {
 	CreateService(entityNew, fs)
 	CreateIngress(entityNew, fs)
 	CreatePvc(entityNew, fs)
-	////Secrets
-	//if len(pDeploymentEntity.Secrets) > 0 {
-	//	CreateSecrets(pDeploymentEntity, fs, entityNew.K8.UseSealedSecrets)
-	//}
-	//}
+	CreateSecrets(entityNew, fs)
+	//Create values
+	for _, environment := range entityNew.K8.Environments {
+		env := EnvEntity{
+			Environment: environment,
+			Entity:      entityNew,
+		}
+		CreateValues(env, fs)
+	}
 
 	fmt.Println("Generated helm files")
 }

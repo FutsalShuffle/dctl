@@ -1,10 +1,23 @@
----
-namespace: [[or .K8.Namespace .Name]]
+---[[$env := .Environment]]
 images:
-  tags:
-  [[range $deploymentName, $deployment := .Deployments]]
-    [[$deploymentName]]:
-    [[range $containerName, $container := .$deployment.Containers]]
-      [[$containerName]]: latest
-    [[end]]
+  tag: [[$env]]-latest
+namespace: [[or .Entity.K8.Namespace .Entity.Name]]-[[.Environment]]
+env:[[range $deploymentName, $deployment := .Entity.Deployments ]]
+  [[$deploymentName]]:[[ range $containerName, $container := $deployment.Containers ]]
+    [[$containerName]]:
+      [[- range $envKey, $envs := $container.Envs ]]
+        [[- if $envKey = $env -]][[ range $name, $value := $envs ]]
+      - name: [[$name]]
+        value: [[$value]][[end -]]
+        [[end -]]
+      [[ end -]]
+    [[end -]]
   [[end]]
+secrets:[[range $deploymentName, $deployment := .Entity.Deployments]]
+  [[$deploymentName]]:
+    [[- range $envKey, $envs := .Secrets ]]
+    [[- if $envKey = $env -]][[ range $name, $value := $envs ]]
+    [[ $name ]]: [[ $value ]][[end]]
+    [[end -]]
+    [[end -]]
+  [[end -]]

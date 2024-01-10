@@ -56,6 +56,7 @@ type Deployment struct {
 	Replicas   int                            `yaml:"replicas"`
 	Service    bool                           `yaml:"service" default:"true"`
 	Containers map[string]DeploymentContainer `yaml:"containers"`
+	Secrets    map[string]map[string]string   `yaml:"secrets"`
 }
 
 type DeploymentContainer struct {
@@ -84,6 +85,7 @@ type DeploymentContainer struct {
 		PostStart LifecycleHandler `yaml:"postStart"`
 		PreStop   LifecycleHandler `yaml:"preStop"`
 	}
+	Envs map[string]map[string]string `yaml:"envs"`
 }
 
 type DctlEntity struct {
