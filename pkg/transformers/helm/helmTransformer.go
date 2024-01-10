@@ -17,6 +17,7 @@ import (
 //go:embed sealedSecret.yaml
 //go:embed chart.yaml
 //go:embed values.yaml
+//go:embed _helpers.tpl
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
@@ -42,6 +43,7 @@ func Transform(entity *dctl.DctlEntity) {
 	CreateIngress(entityNew, fs)
 	CreatePvc(entityNew, fs)
 	CreateSecrets(entityNew, fs)
+	CreateHelper(entityNew, fs)
 	//Create values
 	for _, environment := range entityNew.K8.Environments {
 		env := EnvEntity{

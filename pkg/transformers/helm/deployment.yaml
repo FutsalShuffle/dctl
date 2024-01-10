@@ -4,9 +4,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: [[$projectName]]-[[$deploymentName]]
   name: [[$projectName]]-[[$deploymentName]]
+  labels:
+    {{- include "[[$projectName]].labels" . | nindent 4 }}
+    app.kubernetes.io/component: [[$deploymentName]]
+    app: [[$projectName]]-[[$deploymentName]]
   namespace: {{ .Values.namespace }}
 spec:
   replicas: [[ or $deployment.Replicas 1 ]]
@@ -18,6 +20,8 @@ spec:
   template:
     metadata:
       labels:
+        {{- include "[[$projectName]].labels" . | nindent 8 }}
+        app.kubernetes.io/component: [[$deploymentName]]
         app: [[$projectName]]-[[$deploymentName]]
     spec:
       [[- if or $deployment.EmptyDir.Enabled $deployment.Pvc ]]

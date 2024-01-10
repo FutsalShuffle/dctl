@@ -188,6 +188,26 @@ func CreateValues(env EnvEntity, fs embed.FS) {
 	_ = t.Execute(st, env)
 }
 
+func CreateHelper(deployments *dctl.DctlEntity, fs embed.FS) {
+	pwd, _ := os.Getwd()
+	sd, err := fs.ReadFile("_helpers.tpl")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	t := template.
+		Must(template.New("_helpers").
+			Delims("[[", "]]").
+			Parse(string(sd)))
+
+	if err != nil {
+		log.Fatalln("executing template:", err)
+	}
+
+	st, _ := os.Create(pwd + "/.dctl/helm/" + "/templates/_helpers.tpl")
+	_ = t.Execute(st, deployments)
+}
+
 func getMountPath(stringv string) string {
 	return strings.Split(stringv, ":")[1]
 }

@@ -6,6 +6,9 @@ kind: PersistentVolume
 metadata:
   name: [[$deploymentName]]-pv-[[$pvc.Name]]
   labels:
+    {{- include "[[ $projectName ]].labels" . | nindent 4 }}
+    app.kubernetes.io/component: [[$deploymentName]]
+    app: [[ $projectName ]]-[[$deploymentName]]
     type: local
 spec:
   storageClassName: ""
@@ -23,7 +26,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    app: [[ $projectName ]]-[[ $deploymentName ]]
+    {{- include "[[$projectName]].labels" . | nindent 4 }}
+    app.kubernetes.io/component: app
+    app: [[$projectName]]-[[$deploymentName]]
   name: [[$deploymentName]]-pvc-[[$pvc.Name]]
   namespace: {{ .Values.namespace }}
 spec:
