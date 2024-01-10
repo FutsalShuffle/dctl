@@ -39,7 +39,7 @@ spec:
               - mountPath: [[ .EmptyDir.MountPath ]]
                 name: emptydir-volume
               [[- end ]]
-            [[if $container.Pvc]][[ range $index, $value := $container.Pvc]]
+            [[- if $container.Pvc]][[ range $index, $value := $container.Pvc]]
               - mountPath: [[ $value.MountPath ]]
                 name: [[$deploymentName]]-persistant-[[$value.Name]][[end]][[end]]
             {{- $envs := index .Values.env "[[$deploymentName]]" "[[$containerName]]" -}}
