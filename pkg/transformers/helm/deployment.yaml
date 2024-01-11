@@ -37,7 +37,7 @@ spec:
             [[- range $port := $container.Ports ]]
               - containerPort: [[ getPortTwo $port ]]
             [[ end ]][[- end ]]
-            imagePullPolicy: Always
+            imagePullPolicy: [[or .ImagePullPolicy "Always"]]
             volumeMounts:
               [[- if .EmptyDir.Enabled ]]
               - mountPath: [[ .EmptyDir.MountPath ]]
@@ -56,31 +56,31 @@ spec:
               - secretRef:
                   name: [[$projectName]]-[[$deploymentName]]-secret
             {{- end }}
+[[- if .Resources]]
             resources:
-              [[- if or .Resources.Requests.Memory $container.Resources.Requests.Cpu ]]
-              requests:
-                memory: [[ .Resources.Requests.Memory ]]
-                cpu: [[ .Resources.Requests.Cpu ]]
-              [[- end]]
-              [[- if or .Resources.Limits.Memory $container.Resources.Limits.Cpu ]]
-              limits:
-                memory: [[ .Resources.Limits.Memory ]]
-                cpu: [[ .Resources.Limits.Cpu ]]
-              [[- end]]
+[[toYaml .Resources | indent 14 ]][[end]]
+[[- if .Lifecycle]]
             lifecycle:
-              [[if or .Lifecycle.PostStart.Exec.Command .Lifecycle.PostStart.HttpGet.Host]]postStart:
-                [[ if .Lifecycle.PostStart.Exec.Command -]]
-                exec:
-                  command: [ "[[ join `", "` .Lifecycle.PostStart.Exec.Command ]]" ]
-                [[end -]]
-              [[end -]]
-              [[if or .Lifecycle.PreStop.Exec.Command .Lifecycle.PreStop.HttpGet.Host]]preStop:
-                [[ if .Lifecycle.PreStop.Exec.Command -]]
-                exec:
-                  command: [ "[[ join `", "` .Lifecycle.PreStop.Exec.Command ]]" ]
-                [[end -]]
-              [[end -]]
+[[toYaml .Lifecycle | indent 14 ]][[end]]
+[[- if .Args]]
+            args:
+[[toYaml .Args | indent 14 ]][[end]]
+[[- if .Command]]
+            command:
+[[toYaml .Command | indent 14 ]][[end]]
+[[- if .WorkingDir]]
+            workingDir: [[.WorkingDir]][[end]]
+[[- if .ReadinessProbe]]
+            readinessProbe:
+[[toYaml .ReadinessProbe | indent 14 ]][[end]]
+[[- if .LivenessProbe]]
+            livenessProbe:
+[[toYaml .LivenessProbe | indent 14 ]][[end]]
+[[- if .SecurityContext]]
+            securityContext:
+[[toYaml .SecurityContext | indent 14 ]][[end]]
         [[- end]]
+
       restartPolicy: [[ or $deployment.Restart "Always" ]]
       hostAliases:
         - ip: 127.0.0.1

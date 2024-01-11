@@ -1,44 +1,22 @@
 package dctl
 
-type GitlabStageStruct struct {
-	Name          string                 `yaml:"name,omitempty"`
-	Variables     map[string]string      `yaml:"variables,omitempty"`
-	Image         string                 `yaml:"image,omitempty"`
-	BeforeScript  []string               `yaml:"before_script,omitempty"`
-	Artifacts     []string               `yaml:"artifacts,omitempty"`
-	Script        []string               `yaml:"script,omitempty"`
-	AfterScript   []string               `yaml:"after_script,omitempty"`
-	Cache         map[string]interface{} `yaml:"cache,omitempty"`
-	AllowFailure  bool                   `yaml:"allow_failure" default:"false"`
-	Services      map[string]interface{} `yaml:"services,omitempty"`
-	Require       string                 `yaml:"require,omitempty"`
-	Timeout       int                    `yaml:"timeout,omitempty"`
-	Tags          []string               `yaml:"tags,omitempty"`
-	Only          []string               `yaml:"only,omitempty"`
-	Interruptible bool                   `yaml:"interruptible,omitempty" default:"false"`
-	Environment   string                 `yaml:"environment,omitempty"`
-	Retry         map[string]interface{} `yaml:"retry,omitempty"`
-	Release       map[string]interface{} `yaml:"release,omitempty"`
-	Needs         []interface{}          `yaml:"needs,omitempty"`
-	When          string                 `yaml:"when,omitempty"`
-	Secrets       map[string]interface{} `yaml:"secrets,omitempty"`
-	Rules         []interface{}          `yaml:"rules,omitempty"`
-}
-
-type LifecycleHandler struct {
+type Handler struct {
 	Exec struct {
-		Command []string `yaml:"command"`
-	} `yaml:"exec"`
+		Command []string `yaml:"command,omitempty"`
+	} `yaml:"exec,omitempty"`
 	HttpGet struct {
-		Host        string `yaml:"host"`
+		Host        string `yaml:"host,omitempty"`
 		HttpHeaders []struct {
-			Name  string `yaml:"name"`
-			Value string `yaml:"value"`
-		} `yaml:"httpHeaders"`
-		Path   string `yaml:"path"`
-		Port   string `yaml:"port"`
-		Scheme string `yaml:"scheme" default:"http"`
-	} `yaml:"httpGet"`
+			Name  string `yaml:"name,omitempty"`
+			Value string `yaml:"value,omitempty"`
+		} `yaml:"httpHeaders,omitempty"`
+		Path   string `yaml:"path,omitempty"`
+		Port   string `yaml:"port,omitempty"`
+		Scheme string `yaml:"scheme,omitempty" default:"http"`
+	} `yaml:"httpGet,omitempty"`
+	TCPSocket struct {
+		Port string `yaml:"port"`
+	} `yaml:"tcpSocket,omitempty"`
 }
 
 type Deployment struct {
@@ -47,7 +25,9 @@ type Deployment struct {
 			Path string
 			Port string
 		} `yaml:"paths"`
-		Enabled bool `yaml:"enabled" default:"false"`
+		Enabled bool     `yaml:"enabled" default:"false"`
+		Type    string   `yaml:"type" default:"http"`
+		Hosts   []string `yaml:"hosts,omitempty"`
 	} `yaml:"ingress"`
 	Restart string `yaml:"restart" default:"Always"`
 	Pvc     []struct {
@@ -63,35 +43,6 @@ type Deployment struct {
 	Service    bool                           `yaml:"service" default:"true"`
 	Containers map[string]DeploymentContainer `yaml:"containers"`
 	Secrets    map[string]map[string]string   `yaml:"secrets"`
-}
-
-type DeploymentContainer struct {
-	Resources struct {
-		Limits struct {
-			Cpu    string `yaml:"cpu"`
-			Memory string `yaml:"memory"`
-		} `yaml:"limits"`
-		Requests struct {
-			Cpu    string `yaml:"cpu"`
-			Memory string `yaml:"memory"`
-		} `yaml:"requests"`
-	} `yaml:"resources"`
-	Ports []string `yaml:"ports"`
-	Pvc   []struct {
-		Name      string `yaml:"name"`
-		MountPath string `yaml:"mountPath"`
-	} `yaml:"pvc"`
-	Image    string `yaml:"image"`
-	EmptyDir struct {
-		MountPath string `yaml:"mountPath"`
-		Enabled   bool   `yaml:"enabled" default:"false"`
-	} `yaml:"emptyDir"`
-	Env       map[string]string `yaml:"env"`
-	Lifecycle struct {
-		PostStart LifecycleHandler `yaml:"postStart"`
-		PreStop   LifecycleHandler `yaml:"preStop"`
-	}
-	Envs map[string]map[string]string `yaml:"envs"`
 }
 
 type ComposeContainer struct {

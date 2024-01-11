@@ -29,5 +29,9 @@ func ParseDctl() DctlEntity {
 		entity.K8.Environments = envs
 	}
 
+	if entity.K8.Namespace == "" {
+		entity.K8.Namespace = entity.Name
+	}
+
 	return entity
 }

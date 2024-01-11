@@ -4,6 +4,7 @@ import (
 	"dctl/pkg/funcs"
 	"dctl/pkg/parsers/dctl"
 	"embed"
+	"github.com/Masterminds/sprig/v3"
 	"log"
 	"os"
 	"strings"
@@ -26,9 +27,9 @@ func CreateDeployment(deployment *dctl.DctlEntity, fs embed.FS) {
 				"getPortTwo":   getPortTwo,
 				"join":         join,
 				"hasImageTag":  hasImageTag,
-				"indent":       funcs.Indent,
 				"toYaml":       funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Delims("[[", "]]").
 			Parse(data))
 
@@ -55,9 +56,9 @@ func CreateService(deployment *dctl.DctlEntity, fs embed.FS) {
 			Funcs(template.FuncMap{
 				"getPortOne": getPortOne,
 				"getPortTwo": getPortTwo,
-				"indent":     funcs.Indent,
 				"toYaml":     funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Delims("[[", "]]").
 			Parse(string(sf)))
 
@@ -80,9 +81,9 @@ func CreateIngress(deployment *dctl.DctlEntity, fs embed.FS) {
 		Must(template.New("ingress").
 			Delims("[[", "]]").
 			Funcs(template.FuncMap{
-				"indent": funcs.Indent,
 				"toYaml": funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Parse(string(inft)))
 
 	if err != nil {
@@ -103,9 +104,9 @@ func CreatePvc(deployment *dctl.DctlEntity, fs embed.FS) {
 		Must(template.New("claim").
 			Delims("[[", "]]").
 			Funcs(template.FuncMap{
-				"indent": funcs.Indent,
 				"toYaml": funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Parse(string(stc)))
 
 	if err != nil {
@@ -152,9 +153,9 @@ func CreateSecrets(deployment *dctl.DctlEntity, fs embed.FS) {
 		Must(template.New("secrets").
 			Delims("[[", "]]").
 			Funcs(template.FuncMap{
-				"indent": funcs.Indent,
 				"toYaml": funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Parse(string(sd)))
 
 	if err != nil {
@@ -196,9 +197,9 @@ func CreateValues(env EnvEntity, fs embed.FS) {
 		Must(template.New("values").
 			Delims("[[", "]]").
 			Funcs(template.FuncMap{
-				"indent": funcs.Indent,
 				"toYaml": funcs.ToYAML,
 			}).
+			Funcs(sprig.FuncMap()).
 			Parse(string(sd)))
 
 	if err != nil {

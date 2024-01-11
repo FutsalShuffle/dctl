@@ -5,7 +5,7 @@ namespace: [[or .Entity.K8.Namespace .Entity.Name]]-[[.Environment]]
 env:[[range $deploymentName, $deployment := .Entity.Deployments ]]
   [[$deploymentName]]:[[ range $containerName, $container := $deployment.Containers ]]
     [[$containerName]]:
-      [[- range $envKey, $envs := $container.Envs ]]
+      [[- range $envKey, $envs := $container.Env ]]
         [[- if eq $envKey $env -]][[ range $name, $value := $envs ]]
         [[$name]]: "[[$value]]"[[end]]
         [[end -]]

@@ -1,5 +1,5 @@
 [[- $projectName := .Name -]]
-[[range $deploymentName, $deployment := .Deployments]][[if $deployment.Ingress.Enabled]]
+[[range $deploymentName, $deployment := .Deployments]][[if $deployment.Ingress.Enabled]][[$paths := $deployment.Ingress.Paths]]
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -11,15 +11,33 @@ metadata:
   name: ingress-[[$projectName]]-[[$deploymentName]]
   namespace: {{ .Values.namespace }}
 spec:
+  ingressClassName: nginx
+[[- if not $deployment.Ingress.Hosts ]]
   rules:
-    - http:
+    - [[or $deployment.Ingress.Type "http"]]:
         paths:
           [[- range $path := $deployment.Ingress.Paths ]]
           - path: [[$path.Path]]
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: [[$projectName]]-[[ $deploymentName ]]
                 port:
                   number: [[$path.Port]]
-[[end]][[end -]][[end ]]
+[[- end]]
+[[- else ]]
+  rules:
+    [[- range $host := $deployment.Ingress.Hosts]]
+    - host: [[ $host | lower ]]
+      [[or $deployment.Ingress.Type "http"]]:
+        paths:
+          [[- range $path := $deployment.Ingress.Paths ]]
+          - path: [[$path.Path]]
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: [[$projectName]]-[[ $deploymentName ]]
+                port:
+                  number: [[$path.Port]]
+[[- end]]
+[[end]][[end]][[end -]][[end ]]
