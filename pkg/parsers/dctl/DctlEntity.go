@@ -1,22 +1,28 @@
 package dctl
 
 type GitlabStageStruct struct {
-	Name   string `yaml:"name"`
-	Docker struct {
-		Image string `yaml:"image"`
-		Build struct {
-			Args map[string]string `yaml:"args"`
-		}
-	}
-	Before       []string `yaml:"before"`
-	Scripts      []string `yaml:"scripts"`
-	After        []string `yaml:"after"`
-	AllowFailure bool     `yaml:"allow_failure" default:"false"`
-	Services     []string `yaml:"services"`
-	Require      string   `yaml:"require"`
-	Timeout      int      `yaml:"timeout"`
-	Tags         string   `yaml:"tags"`
-	Only         []string `yaml:"only"`
+	Name          string                 `yaml:"name,omitempty"`
+	Variables     map[string]string      `yaml:"variables,omitempty"`
+	Image         string                 `yaml:"image,omitempty"`
+	BeforeScript  []string               `yaml:"before_script,omitempty"`
+	Artifacts     []string               `yaml:"artifacts,omitempty"`
+	Script        []string               `yaml:"script,omitempty"`
+	AfterScript   []string               `yaml:"after_script,omitempty"`
+	Cache         map[string]interface{} `yaml:"cache,omitempty"`
+	AllowFailure  bool                   `yaml:"allow_failure" default:"false"`
+	Services      map[string]interface{} `yaml:"services,omitempty"`
+	Require       string                 `yaml:"require,omitempty"`
+	Timeout       int                    `yaml:"timeout,omitempty"`
+	Tags          []string               `yaml:"tags,omitempty"`
+	Only          []string               `yaml:"only,omitempty"`
+	Interruptible bool                   `yaml:"interruptible,omitempty" default:"false"`
+	Environment   string                 `yaml:"environment,omitempty"`
+	Retry         map[string]interface{} `yaml:"retry,omitempty"`
+	Release       map[string]interface{} `yaml:"release,omitempty"`
+	Needs         []interface{}          `yaml:"needs,omitempty"`
+	When          string                 `yaml:"when,omitempty"`
+	Secrets       map[string]interface{} `yaml:"secrets,omitempty"`
+	Rules         []interface{}          `yaml:"rules,omitempty"`
 }
 
 type LifecycleHandler struct {
@@ -88,6 +94,37 @@ type DeploymentContainer struct {
 	Envs map[string]map[string]string `yaml:"envs"`
 }
 
+type ComposeContainer struct {
+	CPU         int               `yaml:"cpu_shares,omitempty"`
+	DNS         []string          `yaml:"dns,omitempty"`
+	Domain      []string          `yaml:"dns_search,omitempty"`
+	EnvFile     []string          `yaml:"env_file,omitempty"`
+	Expose      []int             `yaml:"expose,omitempty"`
+	Hostname    string            `yaml:"hostname,omitempty"`
+	Memory      int               `yaml:"mem_limit,omitempty"`
+	Network     []string          `yaml:"networks,omitempty"`
+	NetworkMode string            `yaml:"network_mode,omitempty"`
+	Pid         string            `yaml:"pid,omitempty"`
+	Privileged  bool              `yaml:"privileged,omitempty"`
+	User        string            `yaml:"user,omitempty"`
+	WorkDir     string            `yaml:"working_dir,omitempty"`
+	Image       string            `yaml:"image,omitempty"`
+	Ports       []string          `yaml:"ports,omitempty"`
+	Volumes     []string          `yaml:"volumes,omitempty"`
+	Links       []string          `yaml:"links,omitempty"`
+	DependsOn   []string          `yaml:"depends_on,omitempty"`
+	Restart     string            `yaml:"restart,omitempty"`
+	Environment map[string]string `yaml:"environment,omitempty"`
+	Entrypoint  string            `yaml:"entrypoint,omitempty"`
+	Command     []string          `yaml:"command,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Build       struct {
+		Context    string            `yaml:"context,omitempty"`
+		Dockerfile string            `yaml:"dockerfile,omitempty"`
+		Args       map[string]string `yaml:"args,omitempty"`
+	} `yaml:"build,omitempty"`
+}
+
 type DctlEntity struct {
 	Version float32 `yaml:"version"`
 	Name    string  `yaml:"name"`
@@ -101,23 +138,8 @@ type DctlEntity struct {
 		Enabled  bool   `yaml:"enabled" default:"true"`
 		Registry string `yaml:"registry"`
 	} `yaml:"docker"`
-	Containers map[string]*struct {
-		Image       string            `yaml:"image"`
-		Ports       []string          `yaml:"ports"`
-		Volumes     []string          `yaml:"volumes"`
-		Links       []string          `yaml:"links"`
-		DependsOn   []string          `yaml:"depends_on"`
-		Restart     string            `yaml:"restart"`
-		Environment map[string]string `yaml:"environment"`
-		Entrypoint  string            `yaml:"entrypoint"`
-		Command     []string          `yaml:"command"`
-		Build       struct {
-			Context    string            `yaml:"context"`
-			Dockerfile string            `yaml:"dockerfile"`
-			Args       map[string]string `yaml:"args"`
-		} `yaml:"build"`
-	} `yaml:"containers"`
-	Deployments map[string]Deployment `yaml:"deployments"`
+	Containers  map[string]*ComposeContainer `yaml:"containers"`
+	Deployments map[string]Deployment        `yaml:"deployments"`
 	Commands    struct {
 		Db struct {
 			Vendor    string `default:"mysql" yaml:"vendor"`

@@ -4,31 +4,6 @@ version: '3'
 services:
 {{range $index, $container := .Containers}}  {{$index}}:
     container_name: {{$projectName}}_{{$index}}
-    image: {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest
-    {{ if $container.Command }}command: ["{{ join `", "` $container.Command }}"]
-    {{end}}
-    {{- if $container.Ports}}ports:
-      {{ range $container.Ports}}- "{{ . }}"
-      {{ end}}
-    {{ end}}
-    {{- if $container.Volumes}}volumes:
-      {{range $container.Volumes}}- {{ . }} 
-      {{end}}
-    {{ end}}
-    {{- if $container.Command }}command: ["{{ join `", "` $container.Command }}"]{{end}}
-    {{- if $container.Entrypoint }}entrypoint: {{$container.Entrypoint}}{{end}}
-    {{- if $container.Links}}links:
-      {{range $container.Links}}- {{ . }} 
-      {{end}}
-    {{end}}
-    {{- if $container.Restart}}restart: {{$container.Restart}}
-    {{end}}
-    {{- if $container.DependsOn}}depends_on:
-      {{range $container.DependsOn}}- {{.}}
-      {{end}}
-    {{end}}
-    {{- if $container.Environment}}environment:
-      {{range $index, $env := $container.Environment}}{{$index}}: {{$env}} 
-      {{end}}
-    {{- end}}
+    {{if not $container.Image}}image: {{if $docker.Registry}}{{$docker.Registry}}/{{end}}{{$projectName}}/{{$index}}:prod-latest{{end}}
+{{toYaml $container | indent 4 }}
 {{end}}

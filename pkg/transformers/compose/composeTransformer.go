@@ -1,9 +1,12 @@
 package compose
 
 import (
+	"dctl/pkg/funcs"
 	"dctl/pkg/parsers/dctl"
 	"embed"
 	"fmt"
+	"github.com/Masterminds/sprig/v3"
+	"github.com/barkimedes/go-deepcopy"
 	"log"
 	"os"
 	"strings"
@@ -29,7 +32,11 @@ func Transform(entity *dctl.DctlEntity) {
 
 	t := template.
 		Must(template.New("docker-compose").
-			Funcs(template.FuncMap{"join": join}).
+			Funcs(template.FuncMap{
+				"join":   join,
+				"toYaml": funcs.ToYAML,
+			}).
+			Funcs(sprig.FuncMap()).
 			Parse(data))
 	if err != nil {
 		log.Fatalln("executing template:", err)
@@ -44,13 +51,20 @@ func Transform(entity *dctl.DctlEntity) {
 	}
 	dataProd := string(pt)
 
+	cEntity, err := deepcopy.Anything(entity)
+	cEntity = transformForProd(cEntity.(*dctl.DctlEntity))
+
 	tp := template.
 		Must(template.New("docker-compose.prod").
-			Funcs(template.FuncMap{"join": join}).
+			Funcs(template.FuncMap{
+				"join":   join,
+				"toYaml": funcs.ToYAML,
+			}).
+			Funcs(sprig.FuncMap()).
 			Parse(dataProd))
 
 	pfp, err := os.Create(pwd + "/docker-compose.prod.yml")
-	err = tp.Execute(pfp, entity)
+	err = tp.Execute(pfp, cEntity)
 
 	fmt.Println("Generated docker-compose")
 }
@@ -79,6 +93,17 @@ func transformImageToDockerfile(entity *dctl.DctlEntity) *dctl.DctlEntity {
 
 		container.Build.Dockerfile = "./.dctl/containers/" + index + "/Dockerfile"
 		container.Build.Context = "."
+		container.Image = ""
+	}
+
+	return entity
+}
+
+func transformForProd(entity *dctl.DctlEntity) *dctl.DctlEntity {
+	for _, container := range entity.Containers {
+		container.Build.Dockerfile = ""
+		container.Build.Context = ""
+		container.Build.Args = map[string]string{}
 		container.Image = ""
 	}
 

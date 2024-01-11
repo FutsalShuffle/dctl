@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"dctl/pkg/funcs"
 	"dctl/pkg/parsers/dctl"
 	"embed"
 	"log"
@@ -25,6 +26,8 @@ func CreateDeployment(deployment *dctl.DctlEntity, fs embed.FS) {
 				"getPortTwo":   getPortTwo,
 				"join":         join,
 				"hasImageTag":  hasImageTag,
+				"indent":       funcs.Indent,
+				"toYaml":       funcs.ToYAML,
 			}).
 			Delims("[[", "]]").
 			Parse(data))
@@ -52,6 +55,8 @@ func CreateService(deployment *dctl.DctlEntity, fs embed.FS) {
 			Funcs(template.FuncMap{
 				"getPortOne": getPortOne,
 				"getPortTwo": getPortTwo,
+				"indent":     funcs.Indent,
+				"toYaml":     funcs.ToYAML,
 			}).
 			Delims("[[", "]]").
 			Parse(string(sf)))
@@ -74,6 +79,10 @@ func CreateIngress(deployment *dctl.DctlEntity, fs embed.FS) {
 	inftemplate := template.
 		Must(template.New("ingress").
 			Delims("[[", "]]").
+			Funcs(template.FuncMap{
+				"indent": funcs.Indent,
+				"toYaml": funcs.ToYAML,
+			}).
 			Parse(string(inft)))
 
 	if err != nil {
@@ -93,6 +102,10 @@ func CreatePvc(deployment *dctl.DctlEntity, fs embed.FS) {
 	tsc := template.
 		Must(template.New("claim").
 			Delims("[[", "]]").
+			Funcs(template.FuncMap{
+				"indent": funcs.Indent,
+				"toYaml": funcs.ToYAML,
+			}).
 			Parse(string(stc)))
 
 	if err != nil {
@@ -138,6 +151,10 @@ func CreateSecrets(deployment *dctl.DctlEntity, fs embed.FS) {
 	t := template.
 		Must(template.New("secrets").
 			Delims("[[", "]]").
+			Funcs(template.FuncMap{
+				"indent": funcs.Indent,
+				"toYaml": funcs.ToYAML,
+			}).
 			Parse(string(sd)))
 
 	if err != nil {
@@ -178,6 +195,10 @@ func CreateValues(env EnvEntity, fs embed.FS) {
 	t := template.
 		Must(template.New("values").
 			Delims("[[", "]]").
+			Funcs(template.FuncMap{
+				"indent": funcs.Indent,
+				"toYaml": funcs.ToYAML,
+			}).
 			Parse(string(sd)))
 
 	if err != nil {

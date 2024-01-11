@@ -1,9 +1,11 @@
 package gitlab
 
 import (
+	"dctl/pkg/funcs"
 	"dctl/pkg/parsers/dctl"
 	"embed"
 	"fmt"
+	"github.com/Masterminds/sprig/v3"
 	"log"
 	"os"
 	"strings"
@@ -24,12 +26,15 @@ func Transform(entity *dctl.DctlEntity) {
 	}
 	data := string(b)
 
+	entity = addTagToImages(entity)
 	t := template.
 		Must(
 			template.New("gitlab-ci").
 				Funcs(template.FuncMap{
 					"getGitlabWorkflowString": getGitlabWorkflowString,
-					"imageWithTag":            imageWithTag}).
+					"toYaml":                  funcs.ToYAML,
+				}).
+				Funcs(sprig.FuncMap()).
 				Parse(data))
 	if err != nil {
 		log.Fatalln("executing template:", err)
@@ -58,22 +63,23 @@ func getGitlabWorkflowString(workflowType dctl.GitlabWorkflow) string {
 	return ""
 }
 
-func imageWithTag(entity dctl.DctlEntity, image string) string {
-	imageReturn := image
+func addTagToImages(entity *dctl.DctlEntity) *dctl.DctlEntity {
+	for i, stage := range entity.Gitlab.Tests {
+		imageReturn := stage.Image
 
-	if imageReturn == "" {
-		return ""
-	}
-
-	if entity.Docker.Registry != "" { //Добавляем registry url если его нет в image
-		if !strings.Contains(imageReturn, entity.Docker.Registry) {
-			imageReturn = entity.Docker.Registry + "/" + imageReturn
+		if imageReturn == "" {
+			continue
 		}
+
+		count := strings.Count(imageReturn, ":")
+		httpCount := strings.Count(imageReturn, "http")
+		//If image has http protocol, then it will be 2 :
+		if (httpCount == 1 && count == 1) || (httpCount == 0 && count == 0) {
+			imageReturn = imageReturn + ":${CI_COMMIT_REF_NAME}"
+		}
+
+		entity.Gitlab.Tests[i].Image = imageReturn
 	}
 
-	if !strings.Contains(imageReturn, ":") { //Добавляем тег к образу, если его нет
-		imageReturn = imageReturn + ":${CI_COMMIT_REF_NAME}"
-	}
-
-	return imageReturn
+	return entity
 }

@@ -21,22 +21,7 @@ build_{{$index}}:
 {{range $index, $test := $gitlab.Tests}}
 test:{{$test.Name}}:
   stage: test
-  allow_failure: {{$test.AllowFailure}}
-  image: {{imageWithTag $entity $test.Docker.Image}}
-  {{if $test.Scripts}}script:
-  {{range $indexS, $command := $test.Scripts}}  - {{$command}}
-  {{end}}{{end -}}
-  {{if $test.Before}}before_script:
-  {{range $indexB, $command := $test.Before}}  - {{$command}}
-  {{end}}{{end -}}
-  {{if $test.After}}after_script:
-  {{range $indexA, $command := $test.After}}  - {{$command}}
-  {{end}}{{- end -}}
-  {{if $test.Only}}only:
-  {{range $indexO, $only := $test.Only}}  - {{$only}}
-  {{end}}{{- end -}}
-  {{if $test.Docker.Build.Args}}variables:{{range $indexArg, $arg := $test.Docker.Build.Args}}
-    {{$indexArg}}: {{$arg}}{{end}}{{end -}}
+{{toYaml $test | indent 2 }}
 {{end -}}
 
 {{range $index, $deploy := $gitlab.Deploy}}
