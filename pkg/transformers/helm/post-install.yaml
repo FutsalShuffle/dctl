@@ -1,0 +1,106 @@
+[[$deployments := .Deployments ]][[$projectName := .Name -]][[$namespace := .K8.Namespace -]]
+[[range $deploymentName, $deployment := .Deployments]][[- range $containerName, $container := $deployment.Containers]]
+{{- if index .Values "hooks" "[[$deploymentName]]" "[[$containerName]]" "post-install" }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: [[$projectName]]-[[$deploymentName]]-[[$containerName]]-post-install
+  labels:
+    {{- include "[[$projectName]].labels" . | nindent 4 }}
+    app.kubernetes.io/component: [[$deploymentName]]
+    app: [[$projectName]]-[[$deploymentName]]
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+
+spec:
+  template:
+    metadata:
+      name: [[$projectName]]-[[$deploymentName]]-post-install
+      labels:
+        {{- include "[[$projectName]].labels" . | nindent 8 }}
+        app.kubernetes.io/component: [[$deploymentName]]
+        app: [[$projectName]]-[[$deploymentName]]
+    spec:
+      [[- if or $deployment.EmptyDir.Enabled $deployment.Pvc ]]
+      securityContext:
+        fsGroup: 1000
+      [[- end]]
+      containers:
+        [[$hasImageTag := hasImageTag .Image]]
+          - name: [[$projectName]]-[[$deploymentName]]-[[$containerName]]
+            image: [[.Image]][[if not $hasImageTag]]:{{.Values.images.tag}}[[end]]
+            ports:
+            [[- if $container.Ports ]]
+            [[- range $port := $container.Ports ]]
+            - containerPort: [[ getPortTwo $port ]]
+            [[ end ]][[- end ]]
+            imagePullPolicy: [[or .ImagePullPolicy "Always"]]
+            volumeMounts:
+              [[- if .EmptyDir.Enabled ]]
+              - mountPath: [[ .EmptyDir.MountPath ]]
+                name: emptydir-volume
+              [[- end ]]
+            [[- if $container.Pvc]][[ range $index, $value := $container.Pvc]]
+            - mountPath: [[ $value.MountPath ]]
+              name: [[$deploymentName]]-persistant-[[$value.Name]][[end]][[end]]
+            {{- $envs := index .Values.env "[[$deploymentName]]" "[[$containerName]]" -}}
+            {{- with $envs }}
+            env:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- if .Values.secrets.[[$deploymentName]] }}
+            envFrom:
+              - secretRef:
+                  name: [[$projectName]]-[[$deploymentName]]-secret
+            {{- end }}
+            [[- if .Resources]]
+            resources:
+[[toYaml .Resources | indent 14 ]][[end]]
+            [[- if .Lifecycle]]
+            lifecycle:
+[[toYaml .Lifecycle | indent 14 ]][[end]]
+            [[- if .Args]]
+            args:
+[[toYaml .Args | indent 14 ]][[end]]
+            command: [[toYaml .Hooks.PostInstall | nindent 14 ]]
+            [[- if .WorkingDir]]
+            workingDir: [[.WorkingDir]][[end]]
+            [[- if .ReadinessProbe]]
+            readinessProbe:
+[[toYaml .ReadinessProbe | indent 14 ]][[end]]
+            [[- if .LivenessProbe]]
+            livenessProbe:
+[[toYaml .LivenessProbe | indent 14 ]][[end]]
+            [[- if .SecurityContext]]
+            securityContext:
+[[toYaml .SecurityContext | indent 14 ]][[end]]
+      restartPolicy: Never
+      volumes:
+        [[- if $deployment.Pvc]][[ range $index, $value := $deployment.Pvc ]]
+        - name: [[$deploymentName]]-persistant-[[$value.Name]]
+          persistentVolumeClaim:
+            claimName: [[$deploymentName]]-pvc-[[$value.Name]]
+            [[end]][[end]]
+      initContainers:
+        [[- if $deployment.Pvc ]]
+      - name: volume-pvc-permission-set
+        image: busybox:1.31.1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+        command: [ "/bin/sh", "-c" ]
+        args:
+          - /bin/chown 0:1000 [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]] [[ $pvc.MountPath ]] [[- end ]][[- end ]] &&
+            /bin/chmod 775 [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]] [[ $pvc.MountPath ]] [[- end ]][[- end ]]
+        volumeMounts:
+        [[- range $key, $container := $deployment.Containers ]][[- range $keyPvc, $pvc := $container.Pvc ]]
+      - name: [[$deploymentName]]-persistant-[[$pvc.Name]]
+        mountPath: [[ $pvc.MountPath ]]
+        [[ end ]][[- end ]]
+[[end]]
+{{end}}
+[[end]][[end]]

@@ -229,6 +229,22 @@ if [ "$1" == "build-docker-{{$environment}}" ];
           ./dctl.sh build-docker-{{$environment}} {{$index}}{{end}}
     fi
 fi
+
+if [ "$1" == "helm-{{$environment}}-ci" ];
+  then
+    {{range $index, $container := $containers}}
+    if [ "$2" == "upgrade" ];
+        then
+          envsubst ./.dctl/helm/values-{{$environment}}.yaml > ./.dctl/helm/values.yaml && \
+          helm upgrade ./.dctl/helm/ -f ./.dctl/helm/values.yaml --set images.tag=${CI_COMMIT_REF_NAME}
+    fi
+    if [ "$2" == "install" ];
+        then
+          envsubst ./.dctl/helm/values-{{$environment}}.yaml > ./.dctl/helm/values.yaml && \
+          helm install ./.dctl/helm/ -f ./.dctl/helm/values.yaml --set images.tag=${CI_COMMIT_REF_NAME}
+    fi
+    {{end}}
+fi
 {{- end -}}
 
 {{range $index, $command := .Commands.Extra}}

@@ -1,0 +1,2 @@
+---
+dependencies: [[toYaml .K8.Requirements | nindent 2]]

@@ -18,6 +18,13 @@ import (
 //go:embed chart.yaml
 //go:embed values.yaml
 //go:embed _helpers.tpl
+//go:embed post-install.yaml
+//go:embed pre-install.yaml
+//go:embed pre-upgrade.yaml
+//go:embed post-upgrade.yaml
+//go:embed post-rollback.yaml
+//go:embed pre-rollback.yaml
+//go:embed requirements.yaml
 var fs embed.FS
 
 func Transform(entity *dctl.DctlEntity) {
@@ -44,6 +51,8 @@ func Transform(entity *dctl.DctlEntity) {
 	CreatePvc(entityNew, fs)
 	CreateSecrets(entityNew, fs)
 	CreateHelper(entityNew, fs)
+	CreateHooks(entityNew, fs)
+	CreateRequirements(entityNew, fs)
 	//Create values
 	for _, environment := range entityNew.K8.Environments {
 		env := EnvEntity{

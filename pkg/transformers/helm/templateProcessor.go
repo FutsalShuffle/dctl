@@ -4,6 +4,7 @@ import (
 	"dctl/pkg/funcs"
 	"dctl/pkg/parsers/dctl"
 	"embed"
+	"fmt"
 	"github.com/Masterminds/sprig/v3"
 	"log"
 	"os"
@@ -227,6 +228,72 @@ func CreateHelper(deployments *dctl.DctlEntity, fs embed.FS) {
 	}
 
 	st, _ := os.Create(pwd + "/.dctl/helm/" + "/templates/_helpers.tpl")
+	_ = t.Execute(st, deployments)
+}
+
+func CreateHooks(deployments *dctl.DctlEntity, fs embed.FS) {
+	pwd, _ := os.Getwd()
+	hooks := map[string]string{
+		"post-install":  "post-install",
+		"pre-install":   "pre-install",
+		"post-upgrade":  "post-upgrade",
+		"pre-upgrade":   "pre-upgrade",
+		"pre-rollback":  "pre-rollback",
+		"post-rollback": "post-rollback",
+	}
+
+	for _, i := range hooks {
+		sd, err := fs.ReadFile(i + ".yaml")
+
+		if err != nil {
+			fmt.Println(i)
+			log.Fatalln(err)
+		}
+
+		t := template.
+			Must(template.New(i).
+				Delims("[[", "]]").
+				Funcs(template.FuncMap{
+					"getMountPath": getMountPath,
+					"getPortOne":   getPortOne,
+					"getPortTwo":   getPortTwo,
+					"join":         join,
+					"hasImageTag":  hasImageTag,
+					"toYaml":       funcs.ToYAML,
+				}).
+				Funcs(sprig.FuncMap()).
+				Parse(string(sd)))
+
+		if err != nil {
+			log.Fatalln("executing template:", err)
+		}
+
+		st, _ := os.Create(pwd + "/.dctl/helm/" + "/templates/" + i + ".yaml")
+		_ = t.Execute(st, deployments)
+	}
+}
+
+func CreateRequirements(deployments *dctl.DctlEntity, fs embed.FS) {
+	pwd, _ := os.Getwd()
+	sd, err := fs.ReadFile("requirements.yaml")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	t := template.
+		Must(template.New("requirements").
+			Delims("[[", "]]").
+			Funcs(template.FuncMap{
+				"toYaml": funcs.ToYAML,
+			}).
+			Funcs(sprig.FuncMap()).
+			Parse(string(sd)))
+
+	if err != nil {
+		log.Fatalln("executing template:", err)
+	}
+
+	st, _ := os.Create(pwd + "/.dctl/helm/" + "/requirements.yaml")
 	_ = t.Execute(st, deployments)
 }
 
