@@ -76,16 +76,17 @@ type ComposeContainer struct {
 	} `yaml:"build,omitempty"`
 }
 
+// dctl.yaml
 type DctlEntity struct {
-	Version float32 `yaml:"version"`
-	Name    string  `yaml:"name"`
+	Version float32 `yaml:"version"` //Example: 1.0
+	Name    string  `yaml:"name"`    //Example: example
 	K8      struct {
-		Enabled          bool          `yaml:"enabled" default:"false"`
-		Namespace        string        `yaml:"namespace" default:"default"`
-		Environments     []string      `yaml:"environments"`
-		UseSealedSecrets bool          `yaml:"useSealedSecrets" default:"false"`
+		Enabled          bool          `yaml:"enabled" default:"false"`          //Example: true
+		Namespace        string        `yaml:"namespace" default:"default"`      //Example: test
+		Environments     []string      `yaml:"environments"`                     //Example: [dev, prod]
+		UseSealedSecrets bool          `yaml:"useSealedSecrets" default:"false"` //Example: false
 		Requirements     []Requirement `yaml:"requirements,omitempty"`
-	}
+	} `yaml:"k8"`
 	Docker struct {
 		Enabled  bool   `yaml:"enabled" default:"true"`
 		Registry string `yaml:"registry"`

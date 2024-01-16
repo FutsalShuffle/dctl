@@ -1,96 +1,31 @@
 version: 1
 name: example #Название проекта (префикс в контейнерах и не только)
 
+#настройки docker
 docker:
   enabled: true #Генерировать ли docker-compose и Dockerfile
   registry: "" #Для ci/cd
 
+#Настройки kubernetes/helm
 k8:
-  enabled: true #Генерировать ли kubernetes конфиги
+  enabled: true #Генерировать ли kubernetes/helm конфиги
+  namespace: "example" #namespace в k8, дефолтится на name выше
+  environments: #Массив площадок, дефолт на dev и prod
+    - dev
+    - prod
+  useSealedSecrets: false #Использовать ли sealed secrets
+  requirements: #Доп chart'ы для helm
+    - name: mysql
+      version: 5.7
+      repository: oci://registry-1.docker.io/bitnamicharts/mysql
 
 #Контейнеры docker-compose
-#Синтаксис как в docker-compose
+#Синтаксис как в docker-compose // https://docs.docker.com/compose/compose-file/compose-file-v3/
 containers:
-  smtp:
-    image: mailhog/mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-
   redis:
     image: redis:alpine3.17
     ports:
       - "6382:6379"
-
-  nginx:
-    ports:
-      - "80:80"
-    build:
-      context: ./containers/nginx
-      dockerfile: ./Dockerfile
-      args:
-        USER_ID: "$USER_ID"
-        GROUP_ID: "$GROUP_ID"
-        PROJECT_PREFIX: "$PROJECT_PREFIX"
-        DOCUMENT_ROOT: "$DOCUMENT_ROOT"
-    depends_on:
-      - postgres
-    volumes:
-      - .:/var/www/html
-      - ./.dctl/logs/nginx:/var/log/nginx
-    links:
-      - php
-    restart: unless-stopped
-    environment:
-       APP_ENV: ${APP_ENV}
-       PROJECT_PREFIX: ${PROJECT_PREFIX}
-
-  php:
-    build:
-      context: ./containers/php
-      dockerfile: ./Dockerfile
-      args:
-        USER_ID: ${USER_ID}
-        GROUP_ID: ${GROUP_ID}
-        APP_ENV: "$APP_ENV"
-    volumes:
-      - .:/var/www/html
-      - ./.dctl/logs/php:/var/log/php
-      - ./.dctl/data/sessions:/var/www/sessions
-    links:
-      - postgres
-      - redis
-    restart: unless-stopped
-    environment:
-      APP_ENV: ${APP_ENV}
-      PROJECT_PREFIX: "$PROJECT_PREFIX"
-      DB_CONNECTION: "pgsql"
-      DB_HOST: ${DB_HOST}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-
-  postgres:
-    container_name: ${PROJECT_PREFIX}_postgres
-    build:
-      context: ./containers/postgres
-      dockerfile: ./Dockerfile
-      args:
-        USER_ID: "$USER_ID"
-        GROUP_ID: "$GROUP_ID"
-    environment:
-      TZ: 'Europe/Moscow'
-      PGTZ: 'Europe/Moscow'
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      PGDATA: "/var/lib/postgresql/data/pgdata"
-    volumes:
-      - ./.dctl/data/postgres:/var/lib/postgresql/data
-      - ./.dctl/logs/postgres:/var/log/postgresql/
-    ports:
-      - "5432:5432"
-    restart: always
 
 #Команды dctl
 commands:
@@ -99,3 +34,147 @@ commands:
     container: postgres #название контейнера
   run:
     container: php #в каком контейнере исполняется dctl.sh run
+  extra: #Доп команды для dctl
+    - name: test #Название
+      command: php artisan test #Команда
+  
+gitlab:
+  cache: #общий кеш директорий
+    - /vendor 
+  only_when: merge_request #Значения: merge_request,always,merge_request_master,never
+  tests: #Джобы из стейджа tests. # https://docs.gitlab.com/ee/ci/yaml/
+    - name: test
+      variables: #Не обязательное
+        key: value
+      image: test/test:1.0 #Обязательное. Можно без указания тега, тогда задефолтится на CI_COMMIT_REF_NAME
+      before_script: #Не обязательное
+        - php artisan test
+      artifacts: #Не обязательное
+      script: #Обязательное
+        - php artisan test
+      after_script: #Не обязательное
+        - php artisan test
+      cache: #Не обязательное
+      allow_failure: false #Дефолт на false
+      services: #Не обязательное
+      require: "" #Не обязательное
+      timeout: 30 #Не обязательное
+      tags: #Не обязательное
+        - test
+      only: #Не обязательное
+        - test
+      interruptible: false #Не обязательное
+      environment: "dev" #Не обязательное
+      retry: #Не обязательное
+      release: #Не обязательное
+      needs: #Не обязательное
+      when: "" #Не обязательное
+      secrets: #Не обязательное
+      rules: #Не обязательное
+  deploy: #Джобы из стейджа deploy # https://docs.gitlab.com/ee/ci/yaml/
+    - name: deploy
+      variables: #Не обязательное
+        key: value
+      image: test/test:1.0 #Обязательное. Можно без указания тега, тогда задефолтится на CI_COMMIT_REF_NAME
+      before_script: #Не обязательное
+        - ./dctl.sh deploy
+      artifacts: #Не обязательное
+      script: #Обязательное
+        - ./dctl.sh deploy
+      after_script: #Не обязательное
+        - ./dctl.sh deploy
+      cache: #Не обязательное
+      allow_failure: false #Дефолт на false
+      services: #Не обязательное
+      require: "" #Не обязательное
+      timeout: 30 #Не обязательное
+      tags: #Не обязательное
+        - test
+      only: #Не обязательное
+        - test
+      interruptible: false #Не обязательное
+      environment: "dev" #Не обязательное
+      retry: #Не обязательное
+      release: #Не обязательное
+      needs: #Не обязательное
+      when: "" #Не обязательное
+      secrets: #Не обязательное
+      rules: #Не обязательное
+
+deployments:
+  app: #Название деплоймента
+    ingress: #ingress
+      enabled: true #Включить
+      type: http #http или https
+      hosts: #Массив Хостов. Можно не указывать
+        - test.ru
+        - test.com
+      paths: #Пути с портом. Массив.
+        - path: /
+          port: 80
+    pvc: #Persistant volume claims. Волюмы.
+      - name: test
+        storage: "10Gi"
+        hostPath: "/mnt/test"
+    emptyDir: #EmptyDir волюм
+      sizeLimit: "512Mi" #Размер
+      enabled: true  #Включить
+    replicas: 2 #Кол-во реплик
+    service: true #Включить сервис
+    secrets: #Секреты (base64 или sealed)
+      prod: #Площадка из k8.environments
+        key: value
+      dev: #Площадка из k8.environments
+        key: value
+    containers: #Контейнеры
+      mysql: #Название контейнера
+        pvc: #Persistant volume claims.
+          - name: test #Название из pvc выше
+            mountPath: '/var/lib/mysql' #Куда монтировать pvc
+        env: #ENV. Можно указывать переменные окружения, идут в values-{env}.yaml.
+          dev: #Площадка из k8.environments
+            MYSQL_ROOT_PASSWORD: 'root'
+            MYSQL_PASSWORD: dev
+          prod: #Площадка из k8.environments
+            MYSQL_ROOT_PASSWORD: 'root'
+            MYSQL_PASSWORD: dev
+        ports: #Порты (в т.ч для сервиса)
+          - 80
+        image: #Можно не указывать. Дефолтится на {registry}/{name}/{containerName}:tag из values
+        workingDir: "" #Можно не указывать.
+        imagePullPolicy: "Always" #Можно не указывать. Дефолтится на Always
+        command: # Ентрипойнт контейнера. Можно не указывать.
+          - composer install
+        args: # Аргументы для ентрипойнта (command). Можно не указывать.
+          - --no-dev
+        lifecycle: #Lifecycle. Можно не указывать. # https://kubernetes.io/docs/tasks/configure-pod-container/attach-handler-lifecycle-event/
+          postStart:
+          preStop:
+        resources: #Можно не указывать. Ресурсы приложения
+          limits:
+            cpu: 1000m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        readinessProbe: #Можно не указывать. https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+          httpGet:
+            path: /php-fpm-ping
+            port: 80
+        livenessProbe: #Можно не указывать. https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+          httpGet:
+            path: /php-fpm-ping
+            port: 80
+        hooks: #Комманды для helm hooks. Можно не указывать. Либо указать только нужный.
+          pre-rollback:
+            - command
+          post-rollback:
+            - command
+          pre-install:
+            - command
+          post-install:
+            - command
+          pre-upgrade:
+            - command
+          post-upgrade:
+            - command
